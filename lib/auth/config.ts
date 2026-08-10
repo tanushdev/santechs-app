@@ -18,7 +18,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Email and password are required");
         }
 
-        console.log("🔍 NextAuth Authorize Email:", credentials.email, "Password Length:", (credentials.password as string)?.length);
         await connectToDatabase();
 
         const creds = credentials as Record<string, unknown>;
@@ -56,8 +55,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Your account is suspended. Contact support.");
         }
 
-        // Update last login
-        await User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
+        // Update last login (non-blocking — don't await to keep login fast)
+        User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() }).exec().catch(() => {});
 
         return {
           id: user._id.toString(),
