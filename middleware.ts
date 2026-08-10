@@ -48,8 +48,10 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get JWT token (works in Edge Runtime)
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  // NextAuth v5 uses "authjs.session-token" in dev and "__Secure-authjs.session-token" on HTTPS
+  const isSecure = req.url.startsWith("https");
+  const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET, cookieName });
   const isLoggedIn = !!token;
   const userRole = token?.role as UserRole | undefined;
 
