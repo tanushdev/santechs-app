@@ -438,11 +438,13 @@ export default function Navbar() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => signOut({
-                          callbackUrl: (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
+                        onClick={() => {
+                          const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+                          const path = (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
                             ? "/super_admin"
-                            : (session?.user?.role === "SELLER" ? "/seller/login" : "/")
-                        })}
+                            : (session?.user?.role === "SELLER" ? "/seller/login" : "/");
+                          signOut({ callbackUrl: `${base}${path}` });
+                        }}
                       >
                         <LogOut className="w-4 h-4 mr-2" />
                         Sign Out

@@ -263,11 +263,13 @@ export default function DashboardHeader() {
               <DropdownMenuSeparator className="bg-slate-100 my-1" />
               
               <DropdownMenuItem
-                onClick={() => signOut({
-                  callbackUrl: (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
+                onClick={() => {
+                  const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+                  const path = (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
                     ? "/super_admin"
-                    : (session?.user?.role === "SELLER" ? "/seller/login" : "/")
-                })}
+                    : (session?.user?.role === "SELLER" ? "/seller/login" : "/");
+                  signOut({ callbackUrl: `${base}${path}` });
+                }}
                 className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
