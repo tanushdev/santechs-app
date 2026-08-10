@@ -48,16 +48,8 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log("✅ MongoDB connected");
-      try {
-        if (mongoose.connection.db) {
-          await mongoose.connection.db.collection("users").dropIndex("email_1");
-          console.log("✅ Dropped old unique email index");
-        }
-      } catch (err) {
-        // Index might not exist, ignore
-      }
       return mongoose;
     });
   }
