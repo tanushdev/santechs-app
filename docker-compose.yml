@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: santechs_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: santechs
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - santechs_net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: santechs_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/santechs?authSource=admin
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    networks:
+      - santechs_net
+
+volumes:
+  mongo_data:
+
+networks:
+  santechs_net:
+    driver: bridge
