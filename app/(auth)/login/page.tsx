@@ -59,14 +59,13 @@ function LoginForm() {
 
       if (callbackUrl === "/" || callbackUrl === "") {
         if (role === "SUPER_ADMIN" || role === "ADMIN") {
-          router.push("/admin/dashboard");
+          window.location.href = "/admin/dashboard";
         } else {
-          router.push("/");
+          window.location.href = "/";
         }
       } else {
-        router.push(callbackUrl);
+        window.location.href = callbackUrl;
       }
-      router.refresh();
     }
   };
 

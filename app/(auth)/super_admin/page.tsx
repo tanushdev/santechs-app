@@ -57,8 +57,7 @@ function SuperAdminLoginForm() {
         return;
       }
 
-      router.push("/admin/dashboard");
-      router.refresh();
+      window.location.href = "/admin/dashboard";
     }
   };
 

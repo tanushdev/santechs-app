@@ -59,11 +59,10 @@ function SellerLoginForm() {
       }
 
       if (callbackUrl === "/" || callbackUrl === "" || callbackUrl === "/buyer/dashboard") {
-        router.push("/seller/dashboard");
+        window.location.href = "/seller/dashboard";
       } else {
-        router.push(callbackUrl);
+        window.location.href = callbackUrl;
       }
-      router.refresh();
     }
   };
 
