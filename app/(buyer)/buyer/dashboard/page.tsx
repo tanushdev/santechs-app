@@ -53,12 +53,11 @@ export default async function BuyerDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Quote Requests", value: totalEnquiries, icon: MessageSquare, href: "/buyer/quotes" },
           { label: "Wishlist", value: wishlistCount, icon: Heart, href: "/buyer/wishlist" },
           { label: "Browse Products", value: "10k+", icon: Package, href: "/products" },
-          { label: "Notifications", value: "—", icon: Bell, href: "/buyer/notifications" },
         ].map((item) => (
           <Link key={item.label} href={item.href}>
             <Card className="card-hover cursor-pointer">

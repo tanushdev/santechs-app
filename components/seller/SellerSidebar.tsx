@@ -26,14 +26,14 @@ export default function SellerSidebar({ isApproved = false }: { isApproved?: boo
     <aside className="fixed left-0 top-0 h-screen w-64 z-40 flex flex-col bg-sidebar border-r border-sidebar-border">
       
       {/* Logo */}
-      <div className="flex items-center h-16 px-6 border-b border-sidebar-border flex-shrink-0 gap-3">
+      <Link href="/seller/dashboard" className="flex items-center h-16 px-6 border-b border-sidebar-border flex-shrink-0 gap-3 hover:opacity-80 transition-opacity">
         <div className="w-8 h-8 rounded-lg orange-gradient flex items-center justify-center flex-shrink-0">
           <Factory className="w-4 h-4 text-white" />
         </div>
         <span className="text-lg font-bold font-heading text-sidebar-foreground">
           San<span className="text-primary">techs</span>
         </span>
-      </div>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
