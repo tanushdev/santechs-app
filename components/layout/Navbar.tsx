@@ -389,52 +389,52 @@ export default function Navbar() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Link href={getDashboardUrl(session.user.role)} className="flex items-center w-full">
+                      <Link href={getDashboardUrl(session.user.role)} className="block w-full">
+                        <DropdownMenuItem className="cursor-pointer">
                           <LayoutDashboard className="w-4 h-4 mr-2" />
                           Dashboard
-                        </Link>
-                      </DropdownMenuItem>
+                        </DropdownMenuItem>
+                      </Link>
                       {session.user.role === UserRole.BUYER && (
                         <>
-                          <DropdownMenuItem>
-                            <Link href="/buyer/wishlist" className="flex items-center w-full">
+                          <Link href="/buyer/wishlist" className="block w-full">
+                            <DropdownMenuItem className="cursor-pointer">
                               <Heart className="w-4 h-4 mr-2" />
                               Wishlist
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Link href="/buyer/quotes" className="flex items-center w-full">
+                            </DropdownMenuItem>
+                          </Link>
+                          <Link href="/buyer/quotes" className="block w-full">
+                            <DropdownMenuItem className="cursor-pointer">
                               <MessageSquare className="w-4 h-4 mr-2" />
                               My Quotes
-                            </Link>
-                          </DropdownMenuItem>
+                            </DropdownMenuItem>
+                          </Link>
                         </>
                       )}
                       {session.user.role === UserRole.SELLER && (
-                        <DropdownMenuItem>
-                          <Link href="/seller/products" className="flex items-center w-full">
+                        <Link href="/seller/products" className="block w-full">
+                          <DropdownMenuItem className="cursor-pointer">
                             <Package className="w-4 h-4 mr-2" />
                             My Products
-                          </Link>
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
+                        </Link>
                       )}
                       {(session.user.role === UserRole.ADMIN ||
                         session.user.role === UserRole.SUPER_ADMIN) && (
-                        <DropdownMenuItem>
-                          <Link href="/admin/dashboard" className="flex items-center w-full">
+                        <Link href="/admin/dashboard" className="block w-full">
+                          <DropdownMenuItem className="cursor-pointer">
                             <Shield className="w-4 h-4 mr-2" />
                             Admin Panel
-                          </Link>
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
+                        </Link>
                       )}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Link href={`${getDashboardUrl(session.user.role)}/profile`} className="flex items-center w-full">
+                      <Link href={`${getDashboardUrl(session.user.role)}/profile`} className="block w-full">
+                        <DropdownMenuItem className="cursor-pointer">
                           <User className="w-4 h-4 mr-2" />
                           Profile
-                        </Link>
-                      </DropdownMenuItem>
+                        </DropdownMenuItem>
+                      </Link>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"

@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/db/connection";
 import Enquiry from "@/lib/db/models/Enquiry.model";
 import Wishlist from "@/lib/db/models/Wishlist.model";
+import Product from "@/lib/db/models/Product.model";
 import Link from "next/link";
 import { Heart, MessageSquare, Bell, User, Package } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserRole } from "@/types";
+import { UserRole, ProductStatus } from "@/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Buyer Dashboard" };
@@ -21,9 +22,10 @@ export default async function BuyerDashboard() {
 
   await connectToDatabase();
 
-  const [totalEnquiries, wishlistCount, recentEnquiries] = await Promise.all([
+  const [totalEnquiries, wishlistCount, totalProducts, recentEnquiries] = await Promise.all([
     Enquiry.countDocuments({ buyer: session.user.id }),
     Wishlist.countDocuments({ user: session.user.id }),
+    Product.countDocuments({ status: ProductStatus.APPROVED }),
     Enquiry.find({ buyer: session.user.id })
       .populate("product", "name slug images referenceNumber")
       .sort({ createdAt: -1 })
@@ -57,7 +59,7 @@ export default async function BuyerDashboard() {
         {[
           { label: "Quote Requests", value: totalEnquiries, icon: MessageSquare, href: "/buyer/quotes" },
           { label: "Wishlist", value: wishlistCount, icon: Heart, href: "/buyer/wishlist" },
-          { label: "Browse Products", value: "10k+", icon: Package, href: "/products" },
+          { label: "Browse Products", value: totalProducts, icon: Package, href: "/products" },
         ].map((item) => (
           <Link key={item.label} href={item.href}>
             <Card className="card-hover cursor-pointer">

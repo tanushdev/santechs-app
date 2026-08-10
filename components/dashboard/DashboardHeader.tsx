@@ -239,25 +239,25 @@ export default function DashboardHeader() {
               <DropdownMenuSeparator className="bg-slate-100 my-1" />
               
               {!isAdmin ? (
-                <DropdownMenuItem className="p-0">
-                  <Link
-                    href="/seller/company"
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer w-full"
-                  >
+                <Link
+                  href="/seller/company"
+                  className="block w-full"
+                >
+                  <DropdownMenuItem className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer">
                     <Building2 className="w-3.5 h-3.5" />
                     Company Profile
-                  </Link>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                </Link>
               ) : (
-                <DropdownMenuItem className="p-0">
-                  <Link
-                    href="/admin/dashboard"
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer w-full"
-                  >
+                <Link
+                  href="/admin/dashboard"
+                  className="block w-full"
+                >
+                  <DropdownMenuItem className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Admin Control
-                  </Link>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                </Link>
               )}
 
               <DropdownMenuSeparator className="bg-slate-100 my-1" />
