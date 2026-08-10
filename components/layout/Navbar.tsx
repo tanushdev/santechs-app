@@ -439,7 +439,7 @@ export default function Navbar() {
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onClick={() => {
-                          const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+                          const base = window.location.origin;
                           const path = (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
                             ? "/super_admin"
                             : (session?.user?.role === "SELLER" ? "/seller/login" : "/");
