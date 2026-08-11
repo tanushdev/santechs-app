@@ -40,7 +40,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 
-const roles = ["ALL", "BUYER", "SELLER", "ADMIN", "SUPER_ADMIN"];
+const roles = ["ALL", "BUYER", "SELLER", "ADMIN"];
 
 export default function AdminAllUsersPage() {
   const [selectedRole, setSelectedRole] = useState("ALL");
@@ -337,55 +337,63 @@ export default function AdminAllUsersPage() {
                   Account Details
                 </button>
 
-                {company && (
-                  <button
-                    onClick={() => setActiveTab("company")}
-                    className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-                      activeTab === "company"
-                        ? "border-primary text-primary"
-                        : "border-transparent text-slate-500 hover:text-slate-900"
-                    }`}
-                  >
-                    <Building2 className="w-3.5 h-3.5 inline mr-1.5" />
-                    Company Profile
-                  </button>
+                {detailUser.role === "SELLER" && (
+                  <>
+                    {company && (
+                      <button
+                        onClick={() => setActiveTab("company")}
+                        className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                          activeTab === "company"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-slate-500 hover:text-slate-900"
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5 inline mr-1.5" />
+                        Company Profile
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setActiveTab("products")}
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === "products"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5 inline mr-1.5" />
+                      Products ({products.length})
+                    </button>
+                  </>
                 )}
 
-                <button
-                  onClick={() => setActiveTab("products")}
-                  className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === "products"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  <Package className="w-3.5 h-3.5 inline mr-1.5" />
-                  Products ({products.length})
-                </button>
+                {detailUser.role === "BUYER" && (
+                  <>
+                    <button
+                      onClick={() => setActiveTab("enquiries")}
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === "enquiries"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 inline mr-1.5" />
+                      Quote Requests ({buyerEnquiries.length})
+                    </button>
 
-                <button
-                  onClick={() => setActiveTab("enquiries")}
-                  className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === "enquiries"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5 inline mr-1.5" />
-                  Quote Requests ({buyerEnquiries.length + sellerEnquiries.length})
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("wishlist")}
-                  className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === "wishlist"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  <Heart className="w-3.5 h-3.5 inline mr-1.5" />
-                  Wishlist ({wishlist.length})
-                </button>
+                    <button
+                      onClick={() => setActiveTab("wishlist")}
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === "wishlist"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <Heart className="w-3.5 h-3.5 inline mr-1.5" />
+                      Wishlist ({wishlist.length})
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Tab Content Body */}

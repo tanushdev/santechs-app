@@ -19,8 +19,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role");
 
-    const query: Record<string, unknown> = {};
-    if (role && Object.values(UserRole).includes(role as UserRole)) {
+    const query: Record<string, unknown> = {
+      role: { $ne: UserRole.SUPER_ADMIN },
+    };
+    if (role && Object.values(UserRole).includes(role as UserRole) && role !== UserRole.SUPER_ADMIN) {
       query.role = role;
     }
 
