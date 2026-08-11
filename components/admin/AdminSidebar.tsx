@@ -15,10 +15,12 @@ import {
   Star,
   ChevronDown,
   UserCheck,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface SidebarLinkProps {
   href: string;
@@ -61,6 +63,7 @@ interface AdminSidebarProps {
   pendingSellers?: number;
   newEnquiries?: number;
   onLinkClick?: () => void;
+  onClose?: () => void;
 }
 
 export function AdminSidebarNavContent({
@@ -68,6 +71,7 @@ export function AdminSidebarNavContent({
   pendingSellers = 0,
   newEnquiries = 0,
   onLinkClick,
+  onClose,
 }: AdminSidebarProps) {
   const [sellersOpen, setSellersOpen] = useState(true);
   const [buyersOpen, setBuyersOpen] = useState(true);
@@ -76,19 +80,36 @@ export function AdminSidebarNavContent({
 
   return (
     <div className="flex flex-col h-full bg-sidebar">
-      {/* Logo */}
-      <Link
-        href="/admin/dashboard"
-        onClick={onLinkClick}
-        className="flex items-center h-16 px-6 border-b border-sidebar-border flex-shrink-0 gap-3 hover:opacity-80 transition-opacity"
-      >
-        <div className="w-8 h-8 rounded-lg orange-gradient flex items-center justify-center flex-shrink-0">
-          <Factory className="w-4 h-4 text-white" />
-        </div>
-        <span className="text-lg font-bold font-heading text-sidebar-foreground">
-          San<span className="text-primary">techs</span>
-        </span>
-      </Link>
+      {/* Header with Logo + Close Button */}
+      <div className="flex items-center justify-between h-16 px-6 border-b border-sidebar-border shrink-0">
+        <Link
+          href="/admin/dashboard"
+          onClick={() => {
+            onLinkClick?.();
+            onClose?.();
+          }}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-8 h-8 rounded-lg orange-gradient flex items-center justify-center shrink-0">
+            <Factory className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-lg font-bold font-heading text-sidebar-foreground">
+            San<span className="text-primary">techs</span>
+          </span>
+        </Link>
+
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0 flex items-center justify-center cursor-pointer"
+            aria-label="Close menu"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-3">

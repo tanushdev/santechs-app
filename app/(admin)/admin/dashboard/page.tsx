@@ -172,25 +172,27 @@ export default async function AdminDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {kpis.map((kpi) => (
           <Link key={kpi.title} href={kpi.href}>
-            <Card className="hover:border-border/80 transition-all card-hover cursor-pointer">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
-                    <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+            <Card className="hover:border-border/80 transition-all card-hover cursor-pointer h-full">
+              <CardContent className="p-4 sm:p-5 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${kpi.bg} flex items-center justify-center shrink-0`}>
+                    <kpi.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${kpi.color}`} />
                   </div>
                   {kpi.badge && (
-                    <Badge variant="outline" className="text-[10px] status-pending">
+                    <Badge variant="outline" className="text-[10px] font-semibold status-pending shrink-0">
                       {kpi.badge}
                     </Badge>
                   )}
                 </div>
-                <div className="text-2xl font-bold font-heading mb-1">
-                  {kpi.value}
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold font-heading mb-0.5">
+                    {kpi.value}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-medium">{kpi.title}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">{kpi.title}</div>
               </CardContent>
             </Card>
           </Link>

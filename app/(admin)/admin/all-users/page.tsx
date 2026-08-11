@@ -292,17 +292,17 @@ export default function AdminAllUsersPage() {
 
       {/* User Full Detail Modal */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden bg-white rounded-2xl border-slate-200 shadow-2xl">
-          <DialogHeader className="p-6 pb-4 border-b border-slate-200 shrink-0 bg-slate-50/50">
+        <DialogContent className="w-[94vw] sm:w-full max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden bg-white rounded-2xl border-slate-200 shadow-2xl">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-200 shrink-0 bg-slate-50/50">
             {detailLoading ? (
               <div className="flex items-center gap-2 text-slate-500 text-sm py-2">
                 <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
                 <span>Loading user profile...</span>
               </div>
             ) : detailUser ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-6">
-                <div className="flex items-start sm:items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl orange-gradient flex items-center justify-center text-white font-bold text-xl shadow-md shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl orange-gradient flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-md shrink-0">
                     {detailUser.name?.charAt(0)?.toUpperCase()}
                   </div>
                   <div className="space-y-1">

@@ -124,8 +124,11 @@ export default function DashboardHeader() {
             >
               <Menu className="w-5 h-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
-              <AdminSidebarNavContent onLinkClick={() => setMobileNavOpen(false)} />
+            <SheetContent side="left" showCloseButton={false} className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
+              <AdminSidebarNavContent
+                onLinkClick={() => setMobileNavOpen(false)}
+                onClose={() => setMobileNavOpen(false)}
+              />
             </SheetContent>
           </Sheet>
         )}
