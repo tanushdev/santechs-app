@@ -45,6 +45,20 @@ import Image from "next/image";
 const roles = ["ALL", "BUYER", "SELLER", "ADMIN"];
 const ITEMS_PER_PAGE = 3;
 
+function formatDate(dateInput?: string | Date | null): string {
+  if (!dateInput) return "N/A";
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "N/A";
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  } catch {
+    return "N/A";
+  }
+}
+
 export default function AdminAllUsersPage() {
   const [selectedRole, setSelectedRole] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -244,7 +258,7 @@ export default function AdminAllUsersPage() {
                         </p>
                       )}
                       <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground/60">
-                        <span>Joined {new Date(String(user.createdAt)).toLocaleDateString()}</span>
+                        <span suppressHydrationWarning>Joined {formatDate(String(user.createdAt))}</span>
                         <span className="font-medium text-primary flex items-center gap-1 group-hover:underline">
                           <span>View details</span>
                           <Eye className="w-3 h-3 shrink-0" />
@@ -458,22 +472,16 @@ export default function AdminAllUsersPage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Joined Date</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>
-                            {new Date(detailUser.createdAt).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </span>
+                          <span suppressHydrationWarning>{formatDate(detailUser.createdAt)}</span>
                         </p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Last Login</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>
+                          <span suppressHydrationWarning>
                             {detailUser.lastLoginAt
-                              ? new Date(detailUser.lastLoginAt).toLocaleString()
+                              ? formatDate(detailUser.lastLoginAt)
                               : "Never logged in"}
                           </span>
                         </p>
