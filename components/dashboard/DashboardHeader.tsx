@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Bell, LogOut, Building2, ShieldCheck, Loader2 } from "lucide-react";
+import { Bell, LogOut, Building2, ShieldCheck, Loader2, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { AdminSidebarNavContent } from "@/components/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -23,6 +25,7 @@ export default function DashboardHeader() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,11 +66,11 @@ export default function DashboardHeader() {
   });
 
   const markReadMutation = useMutation({
-    mutationFn: async (payload: { ids?: string[]; markAll?: boolean }) => {
+    mutationFn: async ({ ids, markAll }: { ids?: string[]; markAll?: boolean }) => {
       const res = await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ids, markAll }),
       });
       return res.json();
     },
@@ -76,28 +79,27 @@ export default function DashboardHeader() {
     },
   });
 
-  const formatRelativeTime = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
   const unreadCount = notifData?.unreadCount ?? 0;
 
-  // Get current page section name
+  const formatRelativeTime = (dateInput: string | Date) => {
+    const d = new Date(dateInput);
+    const now = new Date();
+    const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+    if (diffSec < 60) return "Just now";
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
+  };
+
   const getSectionName = () => {
-    if (pathname.includes("/seller/products/new")) return "Add New Product";
-    if (pathname.includes("/seller/products")) return "Product Catalog";
+    if (pathname.includes("/buyer/dashboard")) return "Buyer Dashboard";
+    if (pathname.includes("/buyer/quotes")) return "My Quote Requests";
+    if (pathname.includes("/buyer/wishlist")) return "Saved Equipment";
+    if (pathname.includes("/seller/dashboard")) return "Seller Command Center";
+    if (pathname.includes("/seller/products")) return "Inventory Listings";
     if (pathname.includes("/seller/enquiries")) return "Quote Requests & Deals";
-    if (pathname.includes("/seller/company")) return "Company Profile Settings";
-    if (pathname.includes("/seller/dashboard")) return "Seller Overview";
-    
+    if (pathname.includes("/seller/company")) return "Company Profile";
+
     if (pathname.includes("/admin/dashboard")) return "Admin Control Center";
     if (pathname.includes("/admin/sellers")) return "Seller Approvals";
     if (pathname.includes("/admin/products")) return "Listing Approvals";
@@ -110,21 +112,36 @@ export default function DashboardHeader() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-6 lg:px-8 h-16 bg-white border-b border-[#e5e7eb] shrink-0"
+      className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 bg-white border-b border-[#e5e7eb] shrink-0"
     >
-      {/* Page Title */}
-      <div>
-        <h2 className="text-sm font-bold text-slate-800 tracking-tight font-sans">
-          {getSectionName()}
-        </h2>
+      {/* Left side: Hamburger button on Mobile/Tablet + Page Title */}
+      <div className="flex items-center gap-3">
+        {isAdmin && (
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger
+              className="lg:hidden h-9 w-9 text-slate-600 hover:text-black hover:bg-slate-100 rounded-xl shrink-0 flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Toggle navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
+              <AdminSidebarNavContent onLinkClick={() => setMobileNavOpen(false)} />
+            </SheetContent>
+          </Sheet>
+        )}
+
+        <div>
+          <h2 className="text-sm font-bold text-slate-800 tracking-tight font-sans truncate">
+            {getSectionName()}
+          </h2>
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4">
-        
+      <div className="flex items-center gap-3 sm:gap-4">
         {/* Notifications Icon Button */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative cursor-pointer hover:bg-[#eeece7]/60 h-9 w-9 flex items-center justify-center rounded-full transition-colors outline-none text-slate-500 hover:text-black">
+          <DropdownMenuTrigger className="relative cursor-pointer hover:bg-[#eeece7]/60 h-9 w-9 flex items-center justify-center rounded-full transition-colors outline-none text-slate-500 hover:text-black shrink-0">
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
               <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center bg-[#ff7759] text-white border-0">
@@ -198,87 +215,90 @@ export default function DashboardHeader() {
 
             <DropdownMenuSeparator />
             <div className="p-1">
-              <Link href={isAdmin ? "/admin/dashboard/notifications" : "/seller/dashboard/notifications"}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-xs font-bold text-slate-500 hover:text-black uppercase tracking-wider cursor-pointer"
-                >
-                  View All Notifications
-                </Button>
+              <Link
+                href={
+                  isAdmin
+                    ? "/admin/dashboard"
+                    : session?.user?.role === "SELLER"
+                    ? "/seller/dashboard"
+                    : "/buyer/dashboard"
+                }
+                className="block text-center text-xs font-bold text-[#ff7759] hover:underline py-1"
+              >
+                Go to Alert Center
               </Link>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile Button Dropdown */}
-        {session && (
+        {/* User Dropdown Profile Menu */}
+        {session?.user && (
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer">
-              <Avatar className="h-8 w-8 hover:opacity-90 transition-opacity ring-2 ring-black/5">
-                <AvatarImage src={session.user.image ?? ""} />
-                <AvatarFallback className="text-xs bg-black text-white font-bold">
-                  {session.user.name?.charAt(0)?.toUpperCase()}
+            <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer group">
+              <Avatar className="w-8 h-8 rounded-full border border-border group-hover:border-primary transition-colors">
+                <AvatarImage src={session.user.image ?? (session.user as any).avatar} />
+                <AvatarFallback className="orange-gradient text-white text-xs font-bold">
+                  {session.user.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-            </DropdownMenuTrigger>
-            
-            <DropdownMenuContent
-              align="end"
-              className="w-56 rounded-xl p-1 bg-white border border-slate-200 shadow-lg"
-            >
-              <DropdownMenuLabel className="px-3 py-2">
-                <p className="text-[9px] font-bold text-slate-400 font-mono uppercase tracking-wider">
-                  Authenticated as
-                </p>
-                <p className="text-sm font-bold text-slate-900 truncate mt-0.5">
+              <div className="hidden md:flex flex-col text-left">
+                <span className="text-xs font-bold text-slate-900 leading-tight">
                   {session.user.name}
-                </p>
-                <p className="text-xs text-slate-500 truncate">{session.user.email}</p>
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono uppercase">
+                  {session.user.role?.replace("_", " ")}
+                </span>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-2 space-y-1">
+              <DropdownMenuLabel className="font-normal p-2">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-xs font-bold leading-none text-slate-900">{session.user.name}</p>
+                  <p className="text-[11px] leading-none text-slate-500 truncate">{session.user.email}</p>
+                  <Badge variant="outline" className="mt-1 w-fit text-[9px] font-bold bg-[#ff7759]/10 text-[#ff7759] border-[#ff7759]/20">
+                    {session.user.role?.replace("_", " ")}
+                  </Badge>
+                </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-slate-100 my-1" />
-              
-              {!isAdmin ? (
-                <Link
-                  href="/seller/company"
-                  className="block w-full"
-                >
-                  <DropdownMenuItem className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer">
-                    <Building2 className="w-3.5 h-3.5" />
-                    Company Profile
-                  </DropdownMenuItem>
-                </Link>
-              ) : (
-                <Link
-                  href="/admin/dashboard"
-                  className="block w-full"
-                >
-                  <DropdownMenuItem className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-slate-700 hover:bg-[#eeece7]/60 cursor-pointer">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    Admin Control
+              <DropdownMenuSeparator />
+
+              {/* Profile Link */}
+              <Link
+                href={
+                  isAdmin
+                    ? "/admin/dashboard/profile"
+                    : session.user.role === "SELLER"
+                    ? "/seller/dashboard/profile"
+                    : "/buyer/dashboard/profile"
+                }
+                className="block w-full"
+              >
+                <DropdownMenuItem className="cursor-pointer text-xs flex items-center gap-2 p-2">
+                  <Building2 className="w-4 h-4 text-slate-500" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+              </Link>
+
+              {isAdmin && (
+                <Link href="/admin/dashboard" className="block w-full">
+                  <DropdownMenuItem className="cursor-pointer text-xs flex items-center gap-2 p-2">
+                    <ShieldCheck className="w-4 h-4 text-slate-500" />
+                    <span>Super Admin Console</span>
                   </DropdownMenuItem>
                 </Link>
               )}
 
-              <DropdownMenuSeparator className="bg-slate-100 my-1" />
-              
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
-                  const base = window.location.origin;
-                  const path = (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN")
-                    ? "/super_admin"
-                    : (session?.user?.role === "SELLER" ? "/seller/login" : "/");
-                  signOut({ callbackUrl: `${base}${path}` });
-                }}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 cursor-pointer"
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="cursor-pointer text-xs text-red-600 focus:text-red-600 focus:bg-red-50 flex items-center gap-2 p-2"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                Sign Out
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-
       </div>
     </header>
   );

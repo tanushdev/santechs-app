@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Package,
   Users,
   MessageSquare,
   BarChart3,
-  Settings,
-  LogOut,
   Factory,
   Tag,
-  Activity,
   CheckSquare,
   Star,
   ChevronDown,
@@ -21,8 +18,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface SidebarLinkProps {
@@ -31,15 +26,17 @@ interface SidebarLinkProps {
   label: string;
   badge?: number;
   isSubmenu?: boolean;
+  onLinkClick?: () => void;
 }
 
-function SidebarLink({ href, icon: Icon, label, badge, isSubmenu }: SidebarLinkProps) {
+function SidebarLink({ href, icon: Icon, label, badge, isSubmenu, onLinkClick }: SidebarLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(href + "/");
 
   return (
     <Link
       href={href}
+      onClick={onLinkClick}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
         isActive
@@ -63,25 +60,28 @@ interface AdminSidebarProps {
   pendingProducts?: number;
   pendingSellers?: number;
   newEnquiries?: number;
+  onLinkClick?: () => void;
 }
 
-export default function AdminSidebar({
+export function AdminSidebarNavContent({
   pendingProducts = 0,
   pendingSellers = 0,
   newEnquiries = 0,
+  onLinkClick,
 }: AdminSidebarProps) {
-  const { data: session } = useSession();
-
-  // Accordion submenus state
   const [sellersOpen, setSellersOpen] = useState(true);
   const [buyersOpen, setBuyersOpen] = useState(true);
   const [usersOpen, setUsersOpen] = useState(true);
   const [platformOpen, setPlatformOpen] = useState(true);
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 z-40 flex flex-col bg-sidebar border-r border-sidebar-border">
+    <div className="flex flex-col h-full bg-sidebar">
       {/* Logo */}
-      <Link href="/admin/dashboard" className="flex items-center h-16 px-6 border-b border-sidebar-border flex-shrink-0 gap-3 hover:opacity-80 transition-opacity">
+      <Link
+        href="/admin/dashboard"
+        onClick={onLinkClick}
+        className="flex items-center h-16 px-6 border-b border-sidebar-border flex-shrink-0 gap-3 hover:opacity-80 transition-opacity"
+      >
         <div className="w-8 h-8 rounded-lg orange-gradient flex items-center justify-center flex-shrink-0">
           <Factory className="w-4 h-4 text-white" />
         </div>
@@ -93,7 +93,7 @@ export default function AdminSidebar({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-3">
         <div className="space-y-1">
-          <SidebarLink href="/admin/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <SidebarLink href="/admin/dashboard" icon={LayoutDashboard} label="Dashboard" onLinkClick={onLinkClick} />
         </div>
 
         {/* Seller Management Submenu */}
@@ -114,6 +114,7 @@ export default function AdminSidebar({
                 label="Pending Sellers"
                 badge={pendingSellers}
                 isSubmenu={true}
+                onLinkClick={onLinkClick}
               />
               <SidebarLink
                 href="/admin/products"
@@ -121,12 +122,14 @@ export default function AdminSidebar({
                 label="Pending Products"
                 badge={pendingProducts}
                 isSubmenu={true}
+                onLinkClick={onLinkClick}
               />
               <SidebarLink
                 href="/admin/all-products"
                 icon={CheckSquare}
                 label="All Products"
                 isSubmenu={true}
+                onLinkClick={onLinkClick}
               />
             </div>
           )}
@@ -150,6 +153,7 @@ export default function AdminSidebar({
                 label="Enquiries"
                 badge={newEnquiries}
                 isSubmenu={true}
+                onLinkClick={onLinkClick}
               />
             </div>
           )}
@@ -172,6 +176,7 @@ export default function AdminSidebar({
                 icon={Users}
                 label="All Users"
                 isSubmenu={true}
+                onLinkClick={onLinkClick}
               />
             </div>
           )}
@@ -189,18 +194,26 @@ export default function AdminSidebar({
 
           {platformOpen && (
             <div className="space-y-1">
-              <SidebarLink href="/admin/categories" icon={Tag} label="Categories" isSubmenu={true} />
-              <SidebarLink href="/admin/featured" icon={Star} label="Featured" isSubmenu={true} />
-              <SidebarLink href="/admin/analytics" icon={BarChart3} label="Analytics" isSubmenu={true} />
+              <SidebarLink href="/admin/categories" icon={Tag} label="Categories" isSubmenu={true} onLinkClick={onLinkClick} />
+              <SidebarLink href="/admin/featured" icon={Star} label="Featured" isSubmenu={true} onLinkClick={onLinkClick} />
+              <SidebarLink href="/admin/analytics" icon={BarChart3} label="Analytics" isSubmenu={true} onLinkClick={onLinkClick} />
             </div>
           )}
         </div>
       </nav>
 
       {/* Sidebar Footer info */}
-      <div className="p-4 border-t border-sidebar-border text-[10px] text-sidebar-foreground/30 font-sans text-center font-semibold">
+      <div className="p-4 border-t border-sidebar-border text-[10px] text-sidebar-foreground/30 font-sans text-center font-semibold shrink-0">
         Santechs Admin Console
       </div>
+    </div>
+  );
+}
+
+export default function AdminSidebar(props: AdminSidebarProps) {
+  return (
+    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 z-40 flex-col bg-sidebar border-r border-sidebar-border">
+      <AdminSidebarNavContent {...props} />
     </aside>
   );
 }
