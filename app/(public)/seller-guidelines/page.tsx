@@ -331,7 +331,7 @@ export default function SellerGuidelinesPage() {
                 </Button>
               </Link>
               <Link href="/contact" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12">
+                <Button size="lg" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold border border-white/30 rounded-xl px-6 h-12 transition-colors">
                   Contact Support
                 </Button>
               </Link>
