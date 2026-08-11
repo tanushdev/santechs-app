@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -16,16 +17,25 @@ import {
   Sparkles,
   Search,
   ChevronDown,
+  Factory,
+  CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+const trustBadges = [
+  { icon: ShieldCheck, title: "Verified Profiles", desc: "GST & Tax ID verification mandatory" },
+  { icon: PackageCheck, title: "Admin Quality Audit", desc: "Every listing reviewed before publication" },
+  { icon: Clock, title: "24–48h Onboarding", desc: "Fast application review turnarounds" },
+  { icon: Search, title: "Global Marketplace", desc: "Connect with verified domestic & global buyers" },
+];
 
 const guidelinesList = [
   {
+    step: "01",
     icon: Building2,
-    title: "1. Seller Onboarding & Company Verification",
+    title: "Seller Onboarding & Verification",
     badge: "Mandatory Requirement",
     badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
     description:
@@ -38,9 +48,10 @@ const guidelinesList = [
     ],
   },
   {
+    step: "02",
     icon: PackageCheck,
-    title: "2. Product Listing Standards & Accuracy",
-    badge: "Listing Quality",
+    title: "Product Listing Standards & Accuracy",
+    badge: "Quality Criteria",
     badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
     description:
       "Every machine, spare part, or raw material listing must accurately represent the actual physical equipment available for sale.",
@@ -52,9 +63,10 @@ const guidelinesList = [
     ],
   },
   {
+    step: "03",
     icon: MessageSquare,
-    title: "3. Enquiry Handling & Managed Communication",
-    badge: "Deal Flow",
+    title: "Enquiry Handling & Managed Communication",
+    badge: "Deal Pipeline",
     badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
     description:
       "Santechs acts as a managed B2B platform coordinator to streamline negotiations, verify buyer intent, and assist in deal execution.",
@@ -66,9 +78,10 @@ const guidelinesList = [
     ],
   },
   {
+    step: "04",
     icon: AlertTriangle,
-    title: "4. Prohibited Content & Listing Violations",
-    badge: "Policy Enforcement",
+    title: "Prohibited Content & Listing Violations",
+    badge: "Strict Policy",
     badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
     description:
       "To maintain platform integrity and buyer trust, strict penalties apply to fraudulent or inaccurate listings.",
@@ -80,9 +93,10 @@ const guidelinesList = [
     ],
   },
   {
+    step: "05",
     icon: FileText,
-    title: "5. Documentation & Dispatch Compliance",
-    badge: "Order Fulfillment",
+    title: "Documentation & Order Fulfillment",
+    badge: "Compliance",
     badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
     description:
       "Sellers must ensure seamless documentation and logistical coordination once a deal is closed.",
@@ -121,113 +135,128 @@ export default function SellerGuidelinesPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <div className="bg-slate-50 min-h-screen py-12 sm:py-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* Header Hero Section */}
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xs space-y-6 text-center sm:text-left relative overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="space-y-3 max-w-3xl">
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20 px-3 py-1 font-semibold text-xs inline-flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" /> Platform Quality Standards
-            </Badge>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading text-slate-900 tracking-tight leading-tight">
-              Seller Guidelines & Listing Standards
-            </h1>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              Welcome to the Santechs B2B Industrial Marketplace. These guidelines establish the rules, verification standards, and quality criteria required for listing textile machinery, recycling plants, raw materials, and spare parts on our platform.
-            </p>
-          </div>
+    <div className="bg-white min-h-screen">
+      {/* Hero Section with Grid Overlay */}
+      <section className="relative bg-white overflow-hidden py-16 lg:py-24 border-b border-[#e5e7eb]">
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
+            backgroundSize: "80px 80px",
+          }}
+        />
 
-          {/* Key Highlights Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-100 text-left">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <ShieldCheck className="w-4 h-4 text-primary" /> Verified Profile
-              </div>
-              <p className="text-[11px] text-slate-500">GST/Tax ID mandatory for all seller accounts</p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Taxonomy Tag */}
+            <div className="flex justify-center">
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#ff7759] font-bold bg-[#ff7759]/10 px-3.5 py-1 rounded-full">
+                Santechs Quality Standards & Compliance
+              </span>
             </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <PackageCheck className="w-4 h-4 text-primary" /> Admin Approval
-              </div>
-              <p className="text-[11px] text-slate-500">Every product verified before publication</p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <Clock className="w-4 h-4 text-primary" /> Fast Onboarding
-              </div>
-              <p className="text-[11px] text-slate-500">Approvals processed in 24–48 hours</p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                <Search className="w-4 h-4 text-primary" /> Global Reach
-              </div>
-              <p className="text-[11px] text-slate-500">Connect with qualified domestic & international buyers</p>
+
+            {/* Monumental Headline */}
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-normal tracking-[-0.04em] leading-[0.98] text-black font-sans">
+              Seller Guidelines & Listing Standards.
+            </h1>
+
+            <p className="text-base sm:text-lg text-[#75758a] max-w-2xl mx-auto leading-relaxed">
+              Essential rules, company verification criteria, listing quality standards, and code of conduct for listing textile machinery, recycling plants, raw materials, and spare parts on Santechs.
+            </p>
+
+            {/* Trust Cards Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 text-left">
+              {trustBadges.map((badge, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 rounded-2xl bg-white border border-[#e5e7eb] space-y-2 hover:border-black/20 transition-all shadow-xs"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-[#ff7759]/10 flex items-center justify-center text-[#ff7759]">
+                    <badge.icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-black">{badge.title}</h4>
+                    <p className="text-[11px] text-[#75758a] leading-tight mt-0.5">{badge.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Guidelines Sections */}
-        <div className="space-y-6">
-          <div className="text-center sm:text-left space-y-1">
-            <h2 className="text-2xl font-bold font-heading text-slate-900">
-              Seller Code of Conduct & Requirements
+      {/* Main Guidelines Section */}
+      <section className="py-20 bg-[#faf9f6] border-b border-[#e5e7eb]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#75758a] font-bold">
+              Policy Framework
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-normal tracking-tight text-black font-sans">
+              Seller Code of Conduct & Guidelines
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Please review the following policy guidelines carefully to ensure your listings remain compliant and active.
+            <p className="text-sm text-[#75758a]">
+              Review the guidelines below to ensure your company account and listings remain compliant and eligible for platform distribution.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {guidelinesList.map((g, idx) => (
-              <Card
+              <motion.div
                 key={idx}
-                className="bg-white border-slate-200 shadow-xs hover:border-slate-300 transition-all"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+                className="bg-white rounded-3xl p-6 sm:p-10 border border-[#e5e7eb] space-y-6 shadow-xs hover:border-black/20 transition-all"
               >
-                <CardContent className="p-6 sm:p-8 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl orange-gradient flex items-center justify-center text-white shrink-0 shadow-xs">
-                        <g.icon className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-bold font-heading text-lg sm:text-xl text-slate-900">
-                        {g.title}
-                      </h3>
-                    </div>
-                    <Badge variant="outline" className={`text-xs font-semibold px-3 py-1 shrink-0 ${g.badgeColor}`}>
-                      {g.badge}
-                    </Badge>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e5e7eb] pb-5">
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono text-sm font-bold text-[#ff7759] bg-[#ff7759]/10 px-3 py-1 rounded-xl">
+                      {g.step}
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-normal tracking-tight text-black font-sans">
+                      {g.title}
+                    </h3>
                   </div>
+                  <Badge variant="outline" className={cn("text-xs font-semibold px-3 py-1 self-start sm:self-auto shrink-0", g.badgeColor)}>
+                    {g.badge}
+                  </Badge>
+                </div>
 
-                  <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                    {g.description}
-                  </p>
+                <p className="text-xs sm:text-sm text-[#75758a] font-medium leading-relaxed">
+                  {g.description}
+                </p>
 
-                  <ul className="space-y-2.5 pt-2">
-                    {g.points.map((point, pIdx) => (
-                      <li key={pIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {g.points.map((point, pIdx) => (
+                    <div
+                      key={pIdx}
+                      className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100/80 text-xs sm:text-sm text-slate-800 leading-relaxed"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-[#ff7759] shrink-0 mt-0.5" />
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* FAQs Accordion */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold font-heading text-slate-900 flex items-center gap-2">
-              <HelpCircle className="w-6 h-6 text-primary" /> Frequently Asked Questions
+      {/* FAQ Section */}
+      <section className="py-20 bg-white border-b border-[#e5e7eb]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center space-y-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#75758a] font-bold">
+              Help Center
+            </span>
+            <h2 className="text-3xl font-normal tracking-tight text-black font-sans flex items-center justify-center gap-2">
+              <HelpCircle className="w-7 h-7 text-[#ff7759]" /> Frequently Asked Questions
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Got questions about selling on Santechs? Find quick answers below.
+            <p className="text-xs sm:text-sm text-[#75758a]">
+              Everything you need to know about seller onboarding, inspection access, and fees.
             </p>
           </div>
 
@@ -237,22 +266,22 @@ export default function SellerGuidelinesPage() {
               return (
                 <div
                   key={index}
-                  className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-slate-50/50"
+                  className="border border-[#e5e7eb] rounded-2xl overflow-hidden transition-all bg-white hover:border-black/20"
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full p-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 hover:text-primary transition-colors cursor-pointer"
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm text-black hover:text-[#ff7759] transition-colors cursor-pointer"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
                       className={cn(
-                        "w-4 h-4 text-slate-500 shrink-0 transition-transform duration-200",
-                        isOpen ? "rotate-180 text-primary" : ""
+                        "w-4 h-4 text-[#75758a] shrink-0 transition-transform duration-200",
+                        isOpen ? "rotate-180 text-[#ff7759]" : ""
                       )}
                     />
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-4 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/50 bg-white">
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#75758a] leading-relaxed border-t border-[#e5e7eb]/60 bg-slate-50/50">
                       {faq.a}
                     </div>
                   )}
@@ -261,32 +290,55 @@ export default function SellerGuidelinesPage() {
             })}
           </div>
         </div>
+      </section>
 
-        {/* Bottom Call to Action Card */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 sm:p-12 text-white text-center space-y-6 shadow-xl relative overflow-hidden">
-          <div className="max-w-2xl mx-auto space-y-3 relative z-10">
-            <h2 className="text-2xl sm:text-3xl font-bold font-heading">
-              Ready to Sell Your Machinery or Materials?
-            </h2>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              Register your company profile on Santechs today and showcase your inventory to thousands of verified industrial buyers across India and globally.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 relative z-10 pt-2">
-            <Link href="/seller/register">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold px-8 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/30">
-                <span>Create Seller Account</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button size="lg" variant="outline" className="border-slate-700 text-white hover:bg-slate-800 rounded-xl px-6">
-                Contact Seller Support
-              </Button>
-            </Link>
+      {/* Matching Enterprise Dark CTA Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-[#003c33] p-8 lg:p-14 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+            <div className="space-y-4 max-w-xl text-center md:text-left">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mx-auto md:mx-0">
+                <Factory className="w-6 h-6 text-[#ff7759]" />
+              </div>
+              <div className="font-mono text-[10px] uppercase tracking-widest text-[#ffad9b] font-bold">
+                Seller Registration Program
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-normal tracking-tight text-white font-sans">
+                Ready to List Your Equipment?
+              </h2>
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                Register your company profile on Santechs today and reach thousands of verified industrial buyers across India and worldwide.
+              </p>
+              <ul className="space-y-2 pt-1 text-left inline-block">
+                {[
+                  "Official Verified Seller badge",
+                  "Direct quote enquiry management",
+                  "Dedicated platform deal coordinator",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-xs font-semibold text-slate-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff7759] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 w-full sm:w-auto">
+              <Link href="/seller/register" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-[#ff7759] hover:bg-[#ff7759]/90 text-white font-bold px-8 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#ff7759]/30 h-12">
+                  <span>Register as Seller</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/contact" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12">
+                  Contact Support
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
