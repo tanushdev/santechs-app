@@ -68,7 +68,7 @@ export async function DELETE(req: NextRequest) {
     const category = await Category.findByIdAndUpdate(
       id,
       { isActive: false },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!category) {

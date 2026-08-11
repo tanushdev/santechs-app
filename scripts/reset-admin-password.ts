@@ -30,7 +30,7 @@ async function reset() {
       role: "SUPER_ADMIN",
       status: "ACTIVE"
     },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   );
   
   console.log("✅ Super Admin credentials updated successfully to:", {

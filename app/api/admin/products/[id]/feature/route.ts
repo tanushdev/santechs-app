@@ -29,7 +29,7 @@ export async function PATCH(
     const product = await Product.findByIdAndUpdate(
       id,
       { isFeatured },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!product) {

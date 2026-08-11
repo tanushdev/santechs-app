@@ -31,7 +31,7 @@ export async function PATCH(
         buyerContactShared,
         sellerContactShared,
       },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!enquiry) {

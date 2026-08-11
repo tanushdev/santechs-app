@@ -11,7 +11,7 @@ const footerLinks = {
   ],
   forSellers: [
     { label: "Sell on Santechs", href: "/sell" },
-    { label: "Seller Guidelines", href: "/guidelines" },
+    { label: "Seller Guidelines", href: "/seller-guidelines" },
   ],
   company: [
     { label: "About Us", href: "/about" },
