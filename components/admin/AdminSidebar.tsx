@@ -75,6 +75,7 @@ export default function AdminSidebar({
   // Accordion submenus state
   const [sellersOpen, setSellersOpen] = useState(true);
   const [buyersOpen, setBuyersOpen] = useState(true);
+  const [usersOpen, setUsersOpen] = useState(true);
   const [platformOpen, setPlatformOpen] = useState(true);
 
   return (
@@ -127,6 +128,22 @@ export default function AdminSidebar({
                 label="All Products"
                 isSubmenu={true}
               />
+            </div>
+          )}
+        </div>
+
+        {/* Buyer Management Submenu */}
+        <div className="space-y-1">
+          <button
+            onClick={() => setBuyersOpen(!buyersOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-sidebar-foreground/45 uppercase tracking-wider hover:text-sidebar-foreground transition-colors"
+          >
+            <span>Buyer Menu</span>
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", buyersOpen ? "" : "-rotate-90")} />
+          </button>
+
+          {buyersOpen && (
+            <div className="space-y-1">
               <SidebarLink
                 href="/admin/enquiries"
                 icon={MessageSquare}
@@ -138,17 +155,17 @@ export default function AdminSidebar({
           )}
         </div>
 
-        {/* User Management */}
+        {/* User Management Submenu */}
         <div className="space-y-1">
           <button
-            onClick={() => setBuyersOpen(!buyersOpen)}
+            onClick={() => setUsersOpen(!usersOpen)}
             className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-sidebar-foreground/45 uppercase tracking-wider hover:text-sidebar-foreground transition-colors"
           >
             <span>User Management</span>
-            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", buyersOpen ? "" : "-rotate-90")} />
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", usersOpen ? "" : "-rotate-90")} />
           </button>
 
-          {buyersOpen && (
+          {usersOpen && (
             <div className="space-y-1">
               <SidebarLink
                 href="/admin/all-users"
