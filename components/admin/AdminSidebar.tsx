@@ -127,17 +127,24 @@ export default function AdminSidebar({
                 label="All Products"
                 isSubmenu={true}
               />
+              <SidebarLink
+                href="/admin/enquiries"
+                icon={MessageSquare}
+                label="Enquiries"
+                badge={newEnquiries}
+                isSubmenu={true}
+              />
             </div>
           )}
         </div>
 
-        {/* Buyer Management Submenu */}
+        {/* User Management */}
         <div className="space-y-1">
           <button
             onClick={() => setBuyersOpen(!buyersOpen)}
             className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-sidebar-foreground/45 uppercase tracking-wider hover:text-sidebar-foreground transition-colors"
           >
-            <span>Buyer Menu</span>
+            <span>User Management</span>
             <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", buyersOpen ? "" : "-rotate-90")} />
           </button>
 
@@ -147,13 +154,6 @@ export default function AdminSidebar({
                 href="/admin/all-users"
                 icon={Users}
                 label="All Users"
-                isSubmenu={true}
-              />
-              <SidebarLink
-                href="/admin/enquiries"
-                icon={MessageSquare}
-                label="Enquiries"
-                badge={newEnquiries}
                 isSubmenu={true}
               />
             </div>
