@@ -37,7 +37,7 @@ export function SellerSidebarNavContent({
   return (
     <div className="flex flex-col h-full bg-sidebar">
       {/* Logo + Header */}
-      <div className="flex items-center justify-between h-16 px-6 border-b border-sidebar-border shrink-0">
+      <div className="flex items-center justify-between h-16 px-5 border-b border-sidebar-border shrink-0">
         <Link
           href="/seller/dashboard"
           onClick={() => {
@@ -59,10 +59,11 @@ export function SellerSidebarNavContent({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0 flex items-center justify-center cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black shrink-0 flex items-center justify-center cursor-pointer border border-slate-200 shadow-xs"
             aria-label="Close menu"
+            title="Close Menu"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4.5 h-4.5" />
           </Button>
         )}
       </div>
@@ -115,9 +116,22 @@ export function SellerSidebarNavContent({
         })}
       </nav>
 
-      {/* Sidebar Footer info */}
-      <div className="p-4 border-t border-sidebar-border text-[10px] text-sidebar-foreground/30 font-sans text-center font-semibold shrink-0">
-        Santechs Seller Console v1.0
+      {/* Sidebar Footer info & Mobile Close Bar */}
+      <div className="p-4 border-t border-sidebar-border space-y-3 shrink-0">
+        {onClose && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            className="w-full h-9 text-xs font-bold rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+            <span>Close Sidebar</span>
+          </Button>
+        )}
+        <div className="text-[10px] text-sidebar-foreground/40 font-sans text-center font-semibold">
+          Santechs Seller Console v1.0
+        </div>
       </div>
     </div>
   );
