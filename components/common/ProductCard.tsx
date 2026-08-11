@@ -93,7 +93,7 @@ export default function ProductCard({
         onClick={handleWishlistToggle}
         className={cn(
           "absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center transition-all hover:border-primary hover:text-primary cursor-pointer",
-          isWishlisted ? "opacity-100 border-red-200 text-red-500 bg-white" : "opacity-0 group-hover:opacity-100"
+          isWishlisted ? "opacity-100 border-red-200 text-red-500 bg-white" : "opacity-60 hover:opacity-100 bg-background/80"
         )}
         aria-label="Add to wishlist"
       >
