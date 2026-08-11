@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -69,6 +69,7 @@ const roles = [
 const ITEMS_PER_PAGE = 9;
 
 export default function AdminAllUsersPage() {
+  const [mounted, setMounted] = useState(false);
   const [selectedRole, setSelectedRole] = useState("ALL");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,6 +78,10 @@ export default function AdminAllUsersPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"account" | "company" | "products" | "enquiries" | "wishlist">("account");
   const { data: session } = useSession();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Query all users (excluding super admin in API)
   const { data: users = [], isLoading, refetch } = useQuery({
@@ -194,6 +199,8 @@ export default function AdminAllUsersPage() {
   const buyerEnquiries = userDetailData?.buyerEnquiries ?? [];
   const sellerEnquiries = userDetailData?.sellerEnquiries ?? [];
   const wishlist = userDetailData?.wishlist ?? [];
+
+  if (!mounted) return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto" suppressHydrationWarning>
