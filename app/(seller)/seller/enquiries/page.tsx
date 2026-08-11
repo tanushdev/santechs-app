@@ -172,7 +172,7 @@ export default async function SellerEnquiriesPage() {
 
                     {/* Contact details status */}
                     <div className="pt-3 border-t border-slate-200/60 text-xs text-slate-500 space-y-1.5">
-                      {enquiry.sellerContactShared ? (
+                      {enquiry.buyerContactShared ? (
                         <div className="space-y-1 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-emerald-800">
                           <p className="font-bold flex items-center gap-1">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Direct Contact Approved
