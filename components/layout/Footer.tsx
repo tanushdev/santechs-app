@@ -45,7 +45,7 @@ export default function Footer() {
             <p className="text-sm text-sidebar-foreground/60 leading-relaxed mb-6">
               India&apos;s premier B2B marketplace for textile machinery, recycling
               plants, raw materials, and spare parts. Connecting verified sellers
-              with global buyers through a trusted brokered platform.
+              with global buyers through the trusted Santechs platform.
             </p>
             <div className="space-y-2">
               <a

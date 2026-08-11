@@ -96,7 +96,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <Progress value={Number(eStats.conversionRate)} className="h-1 bg-slate-100" />
             <p className="text-[10px] text-slate-400 font-medium">
-              {eStats.new} new quote enquiries awaiting broker assignment.
+              {eStats.new} new quote enquiries awaiting Santechs assignment.
             </p>
           </div>
         </div>

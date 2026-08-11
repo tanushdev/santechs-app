@@ -418,7 +418,7 @@ export default function AdminEnquiriesPage() {
           
           <DialogHeader className="p-6 pb-4 border-b border-[#e5e7eb] shrink-0">
             <DialogTitle className="text-xl font-bold font-heading">
-              Enquiry Review & Broker Control
+              Enquiry Review & Santechs Control
             </DialogTitle>
             <DialogDescription className="font-mono text-xs">
               Deals Manager Room · Ref #{selectedEnquiry?.referenceNumber}
@@ -464,7 +464,7 @@ export default function AdminEnquiriesPage() {
 
                 {/* Admin Notes */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Internal Broker Notes</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Internal Santechs Notes</label>
                   <Textarea
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}

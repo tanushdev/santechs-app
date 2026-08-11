@@ -51,7 +51,7 @@ export default function AboutPage() {
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <Handshake className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-black">Brokerage Security</h3>
+            <h3 className="font-bold text-sm text-black">Santechs Security</h3>
             <p className="text-slate-500 text-[11px] leading-relaxed">We hold buyer and seller contact details confidentially, ensuring negotiations are coordinated neutrally.</p>
           </div>
           <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/50 space-y-3">

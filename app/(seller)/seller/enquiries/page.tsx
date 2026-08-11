@@ -154,7 +154,7 @@ export default async function SellerEnquiriesPage() {
                     </div>
                   </div>
 
-                  {/* Right Buyer Info / Brokerage Card */}
+                  {/* Right Buyer Info / Santechs Card */}
                   <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 space-y-3">
                     <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#75758a]">
                       Buyer Information

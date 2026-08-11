@@ -101,7 +101,7 @@ export default function NotificationsList() {
             Notifications
           </h1>
           <p className="text-slate-500 text-xs leading-relaxed max-w-xl">
-            Keep track of broker deal updates, buyer messages, quotes requests, and account verification status logs.
+            Keep track of Santechs deal updates, buyer messages, quotes requests, and account verification status logs.
           </p>
         </div>
 

@@ -39,7 +39,7 @@ const steps = [
   },
   {
     icon: Handshake,
-    title: "Admin Brokers Deal",
+    title: "Santechs Facilitates Deal",
     description:
       "Our team connects buyer and seller, negotiates, and shares contacts when both parties are ready.",
     color: "text-[#ff7759]",

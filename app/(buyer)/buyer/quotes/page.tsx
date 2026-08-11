@@ -14,8 +14,8 @@ export const metadata: Metadata = { title: "My Quote Requests — Santechs" };
 
 const statusLabels: Record<string, { label: string; className: string }> = {
   NEW: { label: "Inquiry Received", className: "bg-blue-50 text-blue-700 border-blue-200" },
-  CONTACTED_BUYER: { label: "Broker Reviewing", className: "bg-amber-50 text-amber-700 border-amber-200" },
-  SELLER_ASSIGNED: { label: "Broker Reviewing", className: "bg-purple-50 text-purple-700 border-purple-200" },
+  CONTACTED_BUYER: { label: "Santechs Reviewing", className: "bg-amber-50 text-amber-700 border-amber-200" },
+  SELLER_ASSIGNED: { label: "Santechs Reviewing", className: "bg-purple-50 text-purple-700 border-purple-200" },
   NEGOTIATION: { label: "Negotiating", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
   QUOTATION_SENT: { label: "Quotation Sent", className: "bg-sky-50 text-sky-700 border-sky-200" },
   INSPECTION_SCHEDULED: { label: "Inspection Scheduled", className: "bg-pink-50 text-pink-700 border-pink-200" },
@@ -58,7 +58,7 @@ export default async function BuyerQuotesPage() {
           My Quote Requests
         </h1>
         <p className="text-slate-600 text-sm max-w-2xl leading-relaxed">
-          Track active quote requests, view broker status updates, and access verified seller contact details once released by your deal coordinator.
+          Track active quote requests, view Santechs team status updates, and access verified seller contact details once released by our deal coordinator.
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export default async function BuyerQuotesPage() {
                       )}
                     </div>
 
-                    {/* Admin/Broker Updates Block */}
+                    {/* Santechs Team Updates Block */}
                     <div className="space-y-1 pt-1">
                       <h4 className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#75758a]">
                         Deal Coordinator Status Response
