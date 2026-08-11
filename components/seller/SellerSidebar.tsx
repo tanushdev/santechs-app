@@ -139,8 +139,10 @@ export function SellerSidebarNavContent({
 
 export default function SellerSidebar(props: SellerSidebarProps) {
   return (
-    <aside className="hidden lg:flex lg:flex-col fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border">
-      <SellerSidebarNavContent {...props} />
+    <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border">
+      <div className="h-full flex flex-col">
+        <SellerSidebarNavContent {...props} />
+      </div>
     </aside>
   );
 }
