@@ -46,8 +46,6 @@ export default async function SellerProductsPage({
   ]);
 
   const totalPages = Math.ceil(total / limit);
-  const startItem = total > 0 ? skip + 1 : 0;
-  const endItem = Math.min(skip + limit, total);
 
   const filterTabs = [
     { label: "All Products", value: "" },
@@ -57,23 +55,6 @@ export default async function SellerProductsPage({
     { label: "Rejected", value: ProductStatus.REJECTED },
     { label: "Archived", value: ProductStatus.ARCHIVED },
   ];
-
-  // Numbered page calculation
-  const getPages = () => {
-    const pages: (number | string)[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("...");
-      pages.push(totalPages);
-    }
-    return pages;
-  };
 
   return (
     <div className="space-y-8">
@@ -92,8 +73,8 @@ export default async function SellerProductsPage({
               Publish and manage your industrial machinery and materials catalog listings. Verify status reviews and update specifications.
             </p>
           </div>
-          <Link href="/seller/products/new" className="shrink-0 w-full sm:w-auto">
-            <Button className="w-full sm:w-auto rounded-full bg-black text-white hover:bg-neutral-800 font-semibold px-6 py-2.5 text-xs uppercase tracking-wider">
+          <Link href="/seller/products/new" className="shrink-0">
+            <Button className="rounded-full bg-black text-white hover:bg-neutral-800 font-semibold px-6 py-2.5 text-xs uppercase tracking-wider">
               <PlusCircle className="w-4 h-4 mr-2" />
               Add Product
             </Button>
@@ -101,18 +82,18 @@ export default async function SellerProductsPage({
         </div>
       </div>
 
-      {/* Filter Tabs - Responsive Horizontal Scroll */}
-      <div className="flex items-center gap-2 pb-2 overflow-x-auto whitespace-nowrap scrollbar-none">
+      {/* Filter Tabs - Pill Outline design */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         {filterTabs.map((tab) => {
           const isActive = selectedStatus === tab.value;
           return (
             <Link
               key={tab.label}
               href={`/seller/products?status=${tab.value}`}
-              className={`px-4 py-2 text-xs font-semibold rounded-full border transition-all shrink-0 ${
+              className={`px-4 py-2 text-xs font-semibold rounded-full border transition-all ${
                 isActive
                   ? "bg-black border-black text-white shadow-xs"
-                  : "bg-white border-[#e5e7eb] text-slate-600 hover:border-slate-400 hover:text-black"
+                  : "bg-transparent border-[#e5e7eb] text-slate-600 hover:border-slate-400 hover:text-black"
               }`}
             >
               {tab.label}
@@ -121,15 +102,9 @@ export default async function SellerProductsPage({
         })}
       </div>
 
-      {/* Total count status bar */}
-      <div className="flex items-center justify-between text-xs text-slate-500 font-mono border-b border-slate-200 pb-2">
-        <span>Showing {startItem}–{endItem} of {total} listings</span>
-        {selectedStatus && <span>Filtered by: {selectedStatus}</span>}
-      </div>
-
-      {/* Products list */}
+      {/* Products list - Card-Separated Layout matching Enquiries */}
       {products.length === 0 ? (
-        <div className="text-center py-20 border border-[#e5e7eb] rounded-2xl bg-[#eeece7]/20 p-6">
+        <div className="text-center py-20 border border-[#e5e7eb] rounded-2xl bg-[#eeece7]/20">
           <Search className="w-8 h-8 text-slate-400 mx-auto mb-3" />
           <h3 className="text-sm font-bold text-black font-sans mb-1">No products found</h3>
           <p className="text-xs text-slate-500 mb-6">
@@ -148,10 +123,10 @@ export default async function SellerProductsPage({
           {products.map((product: any) => (
             <div
               key={product._id.toString()}
-              className="bg-white border border-[#e5e7eb] rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-slate-300 transition-all shadow-xs"
+              className="bg-white border border-[#e5e7eb] rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-slate-300 transition-all shadow-xs"
             >
               {/* Product Info Column */}
-              <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
+              <div className="flex items-start gap-5 flex-1 min-w-0">
                 <div className="relative w-16 h-16 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 border border-[#e5e7eb] flex items-center justify-center">
                   {product.images && product.images.length > 0 ? (
                     <Image
@@ -207,49 +182,32 @@ export default async function SellerProductsPage({
                 productId={product._id.toString()}
                 status={product.status}
               />
+
             </div>
           ))}
         </div>
       )}
 
-      {/* Numbered Interactive Pagination */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-center gap-1.5 pt-6">
+        <div className="flex items-center justify-center gap-2 pt-6">
           <Link
             href={`/seller/products?status=${selectedStatus}&page=${currentPage - 1}`}
-            className={`px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all ${
-              currentPage <= 1
+            className={`px-4 py-2 rounded-full border text-xs font-semibold transition-all ${
+              currentPage === 1
                 ? "pointer-events-none opacity-50 bg-white border-[#e5e7eb] text-slate-400"
                 : "bg-white border-[#e5e7eb] text-black hover:border-black"
             }`}
           >
             Previous
           </Link>
-
-          {getPages().map((p, idx) =>
-            typeof p === "number" ? (
-              <Link
-                key={idx}
-                href={`/seller/products?status=${selectedStatus}&page=${p}`}
-                className={`w-8 h-8 rounded-full border text-xs font-semibold flex items-center justify-center transition-all ${
-                  p === currentPage
-                    ? "bg-black border-black text-white shadow-xs"
-                    : "bg-white border-[#e5e7eb] text-slate-700 hover:border-black"
-                }`}
-              >
-                {p}
-              </Link>
-            ) : (
-              <span key={idx} className="px-1 text-xs text-slate-400 font-mono">
-                ...
-              </span>
-            )
-          )}
-
+          <span className="text-xs text-slate-500 font-mono">
+            Page {currentPage} of {totalPages}
+          </span>
           <Link
             href={`/seller/products?status=${selectedStatus}&page=${currentPage + 1}`}
-            className={`px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all ${
-              currentPage >= totalPages
+            className={`px-4 py-2 rounded-full border text-xs font-semibold transition-all ${
+              currentPage === totalPages
                 ? "pointer-events-none opacity-50 bg-white border-[#e5e7eb] text-slate-400"
                 : "bg-white border-[#e5e7eb] text-black hover:border-black"
             }`}
