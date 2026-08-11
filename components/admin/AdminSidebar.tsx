@@ -247,7 +247,10 @@ export function AdminSidebarNavContent({
 
 export default function AdminSidebar(props: AdminSidebarProps) {
   return (
-    <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border">
+    <aside
+      suppressHydrationWarning
+      className="hidden lg:block fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border"
+    >
       <div className="h-full flex flex-col">
         <AdminSidebarNavContent {...props} />
       </div>
