@@ -43,7 +43,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 const roles = ["ALL", "BUYER", "SELLER", "ADMIN"];
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 3;
 
 export default function AdminAllUsersPage() {
   const [selectedRole, setSelectedRole] = useState("ALL");
@@ -539,21 +539,21 @@ export default function AdminAllUsersPage() {
 
                 {/* 3. Products Added Tab (with Pagination) */}
                 {activeTab === "products" && (
-                  <div className="space-y-4">
+                  <div className="flex-1 flex flex-col justify-between space-y-3">
                     {products.length === 0 ? (
-                      <div className="text-center py-12 text-slate-400 text-xs">
+                      <div className="text-center py-10 text-slate-400 text-xs">
                         No products added by this user.
                       </div>
                     ) : (
                       <>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {paginatedProducts.map((p: any) => (
                             <div
                               key={p._id}
-                              className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                              className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex items-center justify-between gap-3"
                             >
-                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 relative shrink-0 border border-slate-200">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-200 relative shrink-0 border border-slate-200">
                                   {p.images?.[0] ? (
                                     <Image
                                       src={p.images[0]}
@@ -562,15 +562,15 @@ export default function AdminAllUsersPage() {
                                       className="object-cover"
                                     />
                                   ) : (
-                                    <Package className="w-6 h-6 text-slate-400 m-auto" />
+                                    <Package className="w-5 h-5 text-slate-400 m-auto" />
                                   )}
                                 </div>
-                                <div className="min-w-0 flex-1 space-y-1">
+                                <div className="min-w-0 flex-1 space-y-0.5">
                                   <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate" title={p.name}>
                                     {p.name}
                                   </h4>
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 font-mono">
-                                    <span className="bg-slate-200/60 px-1.5 py-0.5 rounded text-[10px] text-slate-700">
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 font-mono">
+                                    <span className="text-[10px] text-slate-600 bg-slate-200/60 px-1.5 py-0.2 rounded font-semibold">
                                       Ref: {p.referenceNumber}
                                     </span>
                                     <span>•</span>
@@ -584,7 +584,7 @@ export default function AdminAllUsersPage() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 w-full sm:w-auto justify-between sm:justify-end">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <Badge
                                   variant="outline"
                                   className={`text-[10px] font-bold px-2 py-0.5 ${
@@ -599,7 +599,7 @@ export default function AdminAllUsersPage() {
                                 </Badge>
                                 {p.slug && (
                                   <Link href={`/products/${p.slug}`} target="_blank">
-                                    <Button size="sm" variant="outline" className="h-8 text-xs font-semibold px-3 rounded-lg border-slate-200 hover:bg-white hover:text-primary flex items-center gap-1.5">
+                                    <Button size="sm" variant="outline" className="h-7 text-xs font-semibold px-2.5 rounded-lg border-slate-200 hover:bg-white hover:text-primary flex items-center gap-1">
                                       <span>View</span>
                                       <ExternalLink className="w-3 h-3 shrink-0" />
                                     </Button>
@@ -612,22 +612,22 @@ export default function AdminAllUsersPage() {
 
                         {/* Pagination Bar for Products */}
                         {totalProductsPages > 1 && (
-                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/80 text-xs">
+                          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs shrink-0 mt-auto">
                             <span className="text-slate-500 font-medium">
-                              Showing <strong className="text-slate-900">{(productsPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong className="text-slate-900">{Math.min(productsPage * ITEMS_PER_PAGE, products.length)}</strong> of <strong className="text-slate-900">{products.length}</strong> products
+                              Showing <strong>{(productsPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong>{Math.min(productsPage * ITEMS_PER_PAGE, products.length)}</strong> of <strong>{products.length}</strong> products
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 disabled={productsPage === 1}
                                 onClick={() => setProductsPage((p) => Math.max(1, p - 1))}
-                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                                className="h-7 text-xs font-semibold px-2 rounded-lg border-slate-200 flex items-center gap-1"
                               >
                                 <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
                                 <span>Prev</span>
                               </Button>
-                              <span className="text-slate-600 font-bold px-2 font-mono text-[11px]">
+                              <span className="text-slate-600 font-bold px-1.5 font-mono text-[11px]">
                                 {productsPage} / {totalProductsPages}
                               </span>
                               <Button
@@ -635,7 +635,7 @@ export default function AdminAllUsersPage() {
                                 variant="outline"
                                 disabled={productsPage === totalProductsPages}
                                 onClick={() => setProductsPage((p) => Math.min(totalProductsPages, p + 1))}
-                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                                className="h-7 text-xs font-semibold px-2 rounded-lg border-slate-200 flex items-center gap-1"
                               >
                                 <span>Next</span>
                                 <ChevronRight className="w-3.5 h-3.5 shrink-0" />
@@ -650,18 +650,18 @@ export default function AdminAllUsersPage() {
 
                 {/* 4. Quote Requests Tab (with Pagination) */}
                 {activeTab === "enquiries" && (
-                  <div className="space-y-4">
+                  <div className="flex-1 flex flex-col justify-between space-y-3">
                     {buyerEnquiries.length === 0 ? (
-                      <div className="text-center py-12 text-slate-400 text-xs">
+                      <div className="text-center py-10 text-slate-400 text-xs">
                         No quote requests linked to this account.
                       </div>
                     ) : (
                       <>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {paginatedBuyerEnquiries.map((e: any) => (
                             <div
                               key={e._id}
-                              className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2.5"
+                              className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 space-y-1.5"
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
@@ -671,10 +671,10 @@ export default function AdminAllUsersPage() {
                                   {e.status?.replace(/_/g, " ")}
                                 </Badge>
                               </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 font-mono bg-white p-2.5 rounded-lg border border-slate-100">
-                                <div><span className="text-slate-400">Ref:</span> {e.referenceNumber}</div>
-                                <div><span className="text-slate-400">Qty:</span> {e.quantity || "N/A"}</div>
-                                <div><span className="text-slate-400">Budget:</span> {e.budget || "N/A"}</div>
+                              <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-600 font-mono bg-white p-2 rounded-lg border border-slate-100">
+                                <div className="truncate"><span className="text-slate-400">Ref:</span> {e.referenceNumber}</div>
+                                <div className="truncate"><span className="text-slate-400">Qty:</span> {e.quantity || "N/A"}</div>
+                                <div className="truncate"><span className="text-slate-400">Budget:</span> {e.budget || "N/A"}</div>
                               </div>
                             </div>
                           ))}
@@ -682,22 +682,22 @@ export default function AdminAllUsersPage() {
 
                         {/* Pagination Bar for Enquiries */}
                         {totalEnquiriesPages > 1 && (
-                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/80 text-xs">
+                          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs shrink-0 mt-auto">
                             <span className="text-slate-500 font-medium">
-                              Showing <strong className="text-slate-900">{(enquiriesPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong className="text-slate-900">{Math.min(enquiriesPage * ITEMS_PER_PAGE, buyerEnquiries.length)}</strong> of <strong className="text-slate-900">{buyerEnquiries.length}</strong> requests
+                              Showing <strong>{(enquiriesPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong>{Math.min(enquiriesPage * ITEMS_PER_PAGE, buyerEnquiries.length)}</strong> of <strong>{buyerEnquiries.length}</strong> requests
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 disabled={enquiriesPage === 1}
                                 onClick={() => setEnquiriesPage((p) => Math.max(1, p - 1))}
-                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                                className="h-7 text-xs font-semibold px-2 rounded-lg border-slate-200 flex items-center gap-1"
                               >
                                 <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
                                 <span>Prev</span>
                               </Button>
-                              <span className="text-slate-600 font-bold px-2 font-mono text-[11px]">
+                              <span className="text-slate-600 font-bold px-1.5 font-mono text-[11px]">
                                 {enquiriesPage} / {totalEnquiriesPages}
                               </span>
                               <Button
@@ -705,7 +705,7 @@ export default function AdminAllUsersPage() {
                                 variant="outline"
                                 disabled={enquiriesPage === totalEnquiriesPages}
                                 onClick={() => setEnquiriesPage((p) => Math.min(totalEnquiriesPages, p + 1))}
-                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                                className="h-7 text-xs font-semibold px-2 rounded-lg border-slate-200 flex items-center gap-1"
                               >
                                 <span>Next</span>
                                 <ChevronRight className="w-3.5 h-3.5 shrink-0" />
