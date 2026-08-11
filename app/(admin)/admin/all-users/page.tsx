@@ -53,9 +53,10 @@ export default function AdminAllUsersPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"account" | "company" | "products" | "enquiries" | "wishlist">("account");
   
-  // Pagination states
+  // Pagination & Search states
   const [productsPage, setProductsPage] = useState(1);
   const [enquiriesPage, setEnquiriesPage] = useState(1);
+  const [productSearch, setProductSearch] = useState("");
 
   const { data: session } = useSession();
 
@@ -113,6 +114,7 @@ export default function AdminAllUsersPage() {
     setActiveTab("account");
     setProductsPage(1);
     setEnquiriesPage(1);
+    setProductSearch("");
     setDetailModalOpen(true);
   };
 
@@ -131,9 +133,20 @@ export default function AdminAllUsersPage() {
   const sellerEnquiries = userDetailData?.sellerEnquiries ?? [];
   const wishlist = userDetailData?.wishlist ?? [];
 
-  // Paginated Products
-  const totalProductsPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-  const paginatedProducts = products.slice((productsPage - 1) * ITEMS_PER_PAGE, productsPage * ITEMS_PER_PAGE);
+  // Filtered & Paginated Products
+  const filteredProducts = products.filter((p: any) => {
+    const q = productSearch.toLowerCase().trim();
+    if (!q) return true;
+    const name = String(p.name ?? "").toLowerCase();
+    const refNum = String(p.referenceNumber ?? "").toLowerCase();
+    return name.includes(q) || refNum.includes(q);
+  });
+
+  const totalProductsPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (productsPage - 1) * ITEMS_PER_PAGE,
+    productsPage * ITEMS_PER_PAGE
+  );
 
   // Paginated Buyer Enquiries
   const totalEnquiriesPages = Math.ceil(buyerEnquiries.length / ITEMS_PER_PAGE);
@@ -537,12 +550,29 @@ export default function AdminAllUsersPage() {
                   </div>
                 )}
 
-                {/* 3. Products Added Tab (with Pagination) */}
+                {/* 3. Products Added Tab (with Search & Pagination) */}
                 {activeTab === "products" && (
                   <div className="flex-1 flex flex-col justify-between space-y-3">
-                    {products.length === 0 ? (
+                    {products.length > 0 && (
+                      <div className="relative shrink-0">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <Input
+                          value={productSearch}
+                          onChange={(e) => {
+                            setProductSearch(e.target.value);
+                            setProductsPage(1);
+                          }}
+                          placeholder="Search seller's products by name or ref #..."
+                          className="pl-8 h-8 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white"
+                        />
+                      </div>
+                    )}
+
+                    {filteredProducts.length === 0 ? (
                       <div className="text-center py-10 text-slate-400 text-xs">
-                        No products added by this user.
+                        {products.length === 0
+                          ? "No products added by this user."
+                          : "No products match your search query."}
                       </div>
                     ) : (
                       <>
@@ -614,7 +644,7 @@ export default function AdminAllUsersPage() {
                         {totalProductsPages > 1 && (
                           <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs shrink-0 mt-auto">
                             <span className="text-slate-500 font-medium">
-                              Showing <strong>{(productsPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong>{Math.min(productsPage * ITEMS_PER_PAGE, products.length)}</strong> of <strong>{products.length}</strong> products
+                              Showing <strong>{(productsPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong>{Math.min(productsPage * ITEMS_PER_PAGE, filteredProducts.length)}</strong> of <strong>{filteredProducts.length}</strong> products
                             </span>
                             <div className="flex items-center gap-1.5">
                               <Button
