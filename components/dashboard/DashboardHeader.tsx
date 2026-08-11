@@ -121,10 +121,11 @@ export default function DashboardHeader() {
         {(isAdmin || isSeller) && (
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger
-              className="lg:hidden h-9 w-9 text-slate-600 hover:text-black hover:bg-slate-100 rounded-xl shrink-0 flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Toggle navigation menu"
+              className="lg:hidden h-9.5 w-9.5 text-slate-800 hover:bg-slate-100/90 rounded-xl shrink-0 flex items-center justify-center transition-colors cursor-pointer border border-slate-200 shadow-2xs"
+              aria-label="Expand navigation menu"
+              title="Expand Navigation Menu"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5 text-slate-900" />
             </SheetTrigger>
             <SheetContent side="left" showCloseButton={false} className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
               {isAdmin ? (
