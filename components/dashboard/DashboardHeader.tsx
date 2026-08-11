@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminSidebarNavContent } from "@/components/admin/AdminSidebar";
+import { SellerSidebarNavContent } from "@/components/seller/SellerSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -40,6 +41,7 @@ export default function DashboardHeader() {
   }, []);
 
   const isAdmin = pathname.startsWith("/admin");
+  const isSeller = pathname.startsWith("/seller");
 
   const queryClient = useQueryClient();
 
@@ -116,7 +118,7 @@ export default function DashboardHeader() {
     >
       {/* Left side: Hamburger button on Mobile/Tablet + Page Title */}
       <div className="flex items-center gap-3">
-        {isAdmin && (
+        {(isAdmin || isSeller) && (
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger
               className="lg:hidden h-9 w-9 text-slate-600 hover:text-black hover:bg-slate-100 rounded-xl shrink-0 flex items-center justify-center transition-colors cursor-pointer"
@@ -125,10 +127,17 @@ export default function DashboardHeader() {
               <Menu className="w-5 h-5" />
             </SheetTrigger>
             <SheetContent side="left" showCloseButton={false} className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
-              <AdminSidebarNavContent
-                onLinkClick={() => setMobileNavOpen(false)}
-                onClose={() => setMobileNavOpen(false)}
-              />
+              {isAdmin ? (
+                <AdminSidebarNavContent
+                  onLinkClick={() => setMobileNavOpen(false)}
+                  onClose={() => setMobileNavOpen(false)}
+                />
+              ) : (
+                <SellerSidebarNavContent
+                  onLinkClick={() => setMobileNavOpen(false)}
+                  onClose={() => setMobileNavOpen(false)}
+                />
+              )}
             </SheetContent>
           </Sheet>
         )}
