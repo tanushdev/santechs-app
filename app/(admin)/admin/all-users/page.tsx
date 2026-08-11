@@ -41,6 +41,24 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 
+function formatDate(dateInput?: string | Date) {
+  if (!dateInput) return "N/A";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "N/A";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+function formatDateTime(dateInput?: string | Date) {
+  if (!dateInput) return "Never logged in";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "Never logged in";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const hours = String(d.getUTCHours()).padStart(2, "0");
+  const mins = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()} ${hours}:${mins} UTC`;
+}
+
 const roles = [
   { id: "ALL", label: "All Users" },
   { id: "BUYER", label: "Buyers" },
@@ -178,7 +196,7 @@ export default function AdminAllUsersPage() {
   const wishlist = userDetailData?.wishlist ?? [];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto" suppressHydrationWarning>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -386,7 +404,7 @@ export default function AdminAllUsersPage() {
                         )}
 
                         <div className="flex items-center justify-between pt-2 text-[10px] text-slate-400 border-t border-slate-100 mt-2">
-                          <span>Joined {new Date(String(user.createdAt)).toLocaleDateString()}</span>
+                          <span>Joined {formatDate(user.createdAt)}</span>
                           <span className="font-bold text-primary flex items-center gap-1 group-hover:underline">
                             Details <Eye className="w-3 h-3" />
                           </span>
@@ -653,20 +671,14 @@ export default function AdminAllUsersPage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Joined Date</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {new Date(detailUser.createdAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                          {formatDate(detailUser.createdAt)}
                         </p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Last Login</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {detailUser.lastLoginAt
-                            ? new Date(detailUser.lastLoginAt).toLocaleString()
-                            : "Never logged in"}
+                          {formatDateTime(detailUser.lastLoginAt)}
                         </p>
                       </div>
                     </div>
