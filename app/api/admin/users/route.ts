@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
     }
 
     const users = await User.find(query)
-      .populate("company", "name slug isApproved")
       .sort({ createdAt: -1 })
       .lean();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -20,11 +20,12 @@ import {
   Globe,
   MapPin,
   ExternalLink,
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
   ChevronLeft,
   ChevronRight,
-  X,
-  Clock,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,53 +42,29 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 
-function formatDate(dateInput?: string | Date) {
-  if (!dateInput) return "N/A";
-  const d = new Date(dateInput);
-  if (isNaN(d.getTime())) return "N/A";
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
-}
-
-function formatDateTime(dateInput?: string | Date) {
-  if (!dateInput) return "Never logged in";
-  const d = new Date(dateInput);
-  if (isNaN(d.getTime())) return "Never logged in";
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const hours = String(d.getUTCHours()).padStart(2, "0");
-  const mins = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()} ${hours}:${mins} UTC`;
-}
-
-const roles = [
-  { id: "ALL", label: "All Users" },
-  { id: "BUYER", label: "Buyers" },
-  { id: "SELLER", label: "Sellers" },
-  { id: "ADMIN", label: "Admins" },
-];
-
-const ITEMS_PER_PAGE = 9;
+const roles = ["ALL", "BUYER", "SELLER", "ADMIN"];
+const ITEMS_PER_PAGE = 5;
 
 export default function AdminAllUsersPage() {
-  const [mounted, setMounted] = useState(false);
   const [selectedRole, setSelectedRole] = useState("ALL");
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"account" | "company" | "products" | "enquiries" | "wishlist">("account");
+  
+  // Pagination states
+  const [productsPage, setProductsPage] = useState(1);
+  const [enquiriesPage, setEnquiriesPage] = useState(1);
+
   const { data: session } = useSession();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Query all users (excluding super admin in API)
-  const { data: users = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin", "all-users"],
+  // Query all users
+  const { data: users, isLoading, refetch } = useQuery({
+    queryKey: ["admin", "all-users", selectedRole],
     queryFn: async () => {
-      const res = await fetch("/api/admin/users");
+      const url = selectedRole === "ALL" ? "/api/admin/users" : `/api/admin/users?role=${selectedRole}`;
+      const res = await fetch(url);
       if (!res.ok) return [];
       const json = await res.json();
       return json.data ?? [];
@@ -106,62 +83,6 @@ export default function AdminAllUsersPage() {
     },
     enabled: !!selectedUserId && detailModalOpen,
   });
-
-  // Calculate user counts by role
-  const roleCounts = useMemo(() => {
-    const counts = { ALL: users.length, BUYER: 0, SELLER: 0, ADMIN: 0 };
-    users.forEach((u: any) => {
-      const r = u.role as "BUYER" | "SELLER" | "ADMIN";
-      if (counts[r] !== undefined) {
-        counts[r]++;
-      }
-    });
-    return counts;
-  }, [users]);
-
-  // Filter users by role and search query
-  const filteredUsers = useMemo(() => {
-    return users.filter((u: any) => {
-      const matchesRole = selectedRole === "ALL" || u.role === selectedRole;
-      const q = search.trim().toLowerCase();
-      if (!q) return matchesRole;
-
-      const name = String(u.name ?? "").toLowerCase();
-      const email = String(u.email ?? "").toLowerCase();
-      const phone = String(u.phone ?? "").toLowerCase();
-      const companyName = String(u.company?.name ?? "").toLowerCase();
-      const role = String(u.role ?? "").toLowerCase();
-
-      return (
-        matchesRole &&
-        (name.includes(q) ||
-          email.includes(q) ||
-          phone.includes(q) ||
-          companyName.includes(q) ||
-          role.includes(q))
-      );
-    });
-  }, [users, selectedRole, search]);
-
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE) || 1;
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
-    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredUsers, safeCurrentPage]);
-
-  // Reset pagination when role or search changes
-  const handleRoleChange = (roleId: string) => {
-    setSelectedRole(roleId);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (val: string) => {
-    setSearch(val);
-    setCurrentPage(1);
-  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -190,8 +111,18 @@ export default function AdminAllUsersPage() {
   const handleOpenDetail = (id: string) => {
     setSelectedUserId(id);
     setActiveTab("account");
+    setProductsPage(1);
+    setEnquiriesPage(1);
     setDetailModalOpen(true);
   };
+
+  const filtered = (users ?? []).filter((u: Record<string, unknown>) => {
+    const name = String(u.name ?? "").toLowerCase();
+    const email = String(u.email ?? "").toLowerCase();
+    const role = String(u.role ?? "").toLowerCase();
+    const q = search.toLowerCase();
+    return name.includes(q) || email.includes(q) || role.includes(q);
+  });
 
   const detailUser = userDetailData?.user;
   const company = userDetailData?.company;
@@ -200,324 +131,162 @@ export default function AdminAllUsersPage() {
   const sellerEnquiries = userDetailData?.sellerEnquiries ?? [];
   const wishlist = userDetailData?.wishlist ?? [];
 
-  if (!mounted) return null;
+  // Paginated Products
+  const totalProductsPages = Math.ceil(products.length / ITEMS_PER_PAGE);
+  const paginatedProducts = products.slice((productsPage - 1) * ITEMS_PER_PAGE, productsPage * ITEMS_PER_PAGE);
+
+  // Paginated Buyer Enquiries
+  const totalEnquiriesPages = Math.ceil(buyerEnquiries.length / ITEMS_PER_PAGE);
+  const paginatedBuyerEnquiries = buyerEnquiries.slice((enquiriesPage - 1) * ITEMS_PER_PAGE, enquiriesPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto" suppressHydrationWarning>
-      {/* Header */}
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold font-heading">
             User Account Management
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Directory of all registered buyers, sellers, and admin accounts on Santechs.
+          <p className="text-sm text-muted-foreground mt-1">
+            Directory of all registered buyers, sellers, and admin accounts. Click any user to inspect their profile and added items.
           </p>
         </div>
-      </div>
-
-      {/* KPI Stats Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="border border-slate-200/80 shadow-xs bg-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Accounts</p>
-              <p className="text-2xl font-bold font-heading text-slate-900 mt-0.5">{roleCounts.ALL}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-              <Users className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/80 shadow-xs bg-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Buyers</p>
-              <p className="text-2xl font-bold font-heading text-emerald-600 mt-0.5">{roleCounts.BUYER}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/80 shadow-xs bg-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sellers</p>
-              <p className="text-2xl font-bold font-heading text-blue-600 mt-0.5">{roleCounts.SELLER}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-              <Building2 className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/80 shadow-xs bg-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Admins</p>
-              <p className="text-2xl font-bold font-heading text-purple-600 mt-0.5">{roleCounts.ADMIN}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-              <Shield className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-4">
-        {/* Role filter buttons with count tags */}
-        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto">
-          {roles.map((r) => {
-            const count = roleCounts[r.id as keyof typeof roleCounts] ?? 0;
-            const isSelected = selectedRole === r.id;
-            return (
-              <Button
-                key={r.id}
-                size="sm"
-                variant={isSelected ? "default" : "outline"}
-                onClick={() => handleRoleChange(r.id)}
-                className={`text-xs h-8 px-3 rounded-full font-medium transition-all ${
-                  isSelected
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {r.label}
-                <span
-                  className={`ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
-                    isSelected
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-100 text-slate-600"
-                  }`}
-                >
-                  {count}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
-
-        {/* Search input */}
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search by name, email, phone, company..."
-            className="pl-9 pr-9 h-9 text-xs rounded-xl border-slate-200 focus-visible:ring-black"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email..."
+            className="pl-9"
           />
-          {search && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Main Grid Content */}
+      {/* Role filter buttons */}
+      <div className="flex flex-wrap gap-2">
+        {roles.map((r) => (
+          <Button
+            key={r}
+            size="sm"
+            variant={selectedRole === r ? "default" : "outline"}
+            onClick={() => setSelectedRole(r)}
+            className="text-xs font-semibold"
+          >
+            {r.replace("_", " ")}
+          </Button>
+        ))}
+      </div>
+
       {isLoading ? (
-        <div className="text-center py-20 text-slate-500 text-xs">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
+        <div className="text-center py-16 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
           Loading user database...
         </div>
-      ) : filteredUsers.length === 0 ? (
-        <Card className="border-slate-200">
+      ) : filtered.length === 0 ? (
+        <Card>
           <CardContent className="py-16 text-center">
-            <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold font-heading text-slate-900 mb-1">No Accounts Found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              No registered user accounts matched your search criteria or role filter.
-            </p>
-            {(search || selectedRole !== "ALL") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedRole("ALL");
-                  setSearch("");
-                  setCurrentPage(1);
-                }}
-                className="mt-4 text-xs rounded-full"
-              >
-                Reset Filters
-              </Button>
-            )}
+            <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+            <h3 className="text-lg font-bold font-heading mb-1">No Users Found</h3>
+            <p className="text-sm text-muted-foreground">No accounts match the criteria.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {/* User Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginatedUsers.map((user: any) => {
-              const role = String(user.role);
-              const companyName = user.company?.name;
-              return (
-                <Card
-                  key={String(user._id)}
-                  onClick={() => handleOpenDetail(String(user._id))}
-                  className="border-slate-200/80 hover:border-slate-400 transition-all cursor-pointer group hover:shadow-md bg-white rounded-2xl relative overflow-hidden"
-                >
-                  <CardContent className="p-5 flex items-start gap-3.5 justify-between">
-                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      <div className="w-11 h-11 rounded-2xl orange-gradient flex items-center justify-center text-white font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                        {String(user.name).charAt(0).toUpperCase()}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((user: Record<string, unknown>) => {
+            const role = String(user.role);
+            return (
+              <Card
+                key={String(user._id)}
+                onClick={() => handleOpenDetail(String(user._id))}
+                className="hover:border-primary/50 transition-all cursor-pointer group card-hover"
+              >
+                <CardContent className="p-5 flex items-start gap-4 justify-between">
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className="w-11 h-11 rounded-2xl orange-gradient flex items-center justify-center text-white font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                      {String(user.name).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-bold font-heading text-sm truncate group-hover:text-primary transition-colors">
+                          {String(user.name)}
+                        </h3>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] shrink-0 font-semibold px-2 py-0.5 ${
+                            role === "SUPER_ADMIN" || role === "ADMIN"
+                              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200"
+                              : role === "SELLER"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          }`}
+                        >
+                          {role.replace("_", " ")}
+                        </Badge>
                       </div>
-
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <h3 className="font-bold font-heading text-sm text-slate-900 truncate group-hover:text-primary transition-colors">
-                            {String(user.name)}
-                          </h3>
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] shrink-0 font-bold ${
-                              role === "ADMIN"
-                                ? "bg-purple-50 text-purple-700 border-purple-200"
-                                : role === "SELLER"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            }`}
-                          >
-                            {role.replace("_", " ")}
-                          </Badge>
-                        </div>
-
-                        <p className="text-xs text-slate-600 truncate flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="truncate">{String(user.email)}</span>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {String(user.email)}
+                      </p>
+                      {Boolean(user.phone) && (
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          {String(user.phone)}
                         </p>
-
-                        {Boolean(user.phone) && (
-                          <p className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{String(user.phone)}</span>
-                          </p>
-                        )}
-
-                        {companyName && (
-                          <div className="pt-0.5">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md truncate max-w-full">
-                              <Building2 className="w-3 h-3 text-slate-500 shrink-0" />
-                              <span className="truncate">{companyName}</span>
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 text-[10px] text-slate-400 border-t border-slate-100 mt-2">
-                          <span>Joined {formatDate(user.createdAt)}</span>
-                          <span className="font-bold text-primary flex items-center gap-1 group-hover:underline">
-                            Details <Eye className="w-3 h-3" />
-                          </span>
-                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground/60">
+                        <span>Joined {new Date(String(user.createdAt)).toLocaleDateString()}</span>
+                        <span className="font-medium text-primary flex items-center gap-1 group-hover:underline">
+                          <span>View details</span>
+                          <Eye className="w-3 h-3 shrink-0" />
+                        </span>
                       </div>
                     </div>
+                  </div>
 
-                    {session?.user?.role === "SUPER_ADMIN" &&
-                      String(user._id) !== session?.user?.id &&
-                      role !== "SUPER_ADMIN" && (
-                        <button
-                          onClick={(e) => handleDelete(String(user._id), e)}
-                          disabled={deletingId === String(user._id)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 self-start disabled:opacity-50"
-                          title="Permanently delete user account"
-                        >
-                          {deletingId === String(user._id) ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="bg-white border border-slate-200/80 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-slate-500 text-center sm:text-left">
-                Showing <span className="font-bold text-slate-900">{(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
-                <span className="font-bold text-slate-900">
-                  {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredUsers.length)}
-                </span>{" "}
-                of <span className="font-bold text-slate-900">{filteredUsers.length}</span> user accounts
-              </p>
-
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={safeCurrentPage === 1}
-                  className="h-8 px-3 text-xs rounded-xl border-slate-200 disabled:opacity-40"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
-                </Button>
-
-                <div className="flex items-center gap-1 px-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${
-                        pageNum === safeCurrentPage
-                          ? "bg-slate-900 text-white shadow-xs"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={safeCurrentPage === totalPages}
-                  className="h-8 px-3 text-xs rounded-xl border-slate-200 disabled:opacity-40"
-                >
-                  Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
+                  {session?.user?.role === "SUPER_ADMIN" &&
+                    String(user._id) !== session?.user?.id &&
+                    role !== "SUPER_ADMIN" && (
+                      <button
+                        onClick={(e) => handleDelete(String(user._id), e)}
+                        disabled={deletingId === String(user._id)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 self-center disabled:opacity-50"
+                        title="Permanently delete user account"
+                      >
+                        {deletingId === String(user._id) ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {/* User Full Detail Modal */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] w-[95vw] sm:w-full flex flex-col p-0 overflow-hidden bg-white rounded-2xl shadow-2xl border-slate-200">
-          <DialogHeader className="p-5 sm:p-6 pb-4 border-b border-slate-100 shrink-0">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden bg-white rounded-2xl border-slate-200 shadow-2xl">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-200 shrink-0 bg-slate-50/50">
             {detailLoading ? (
-              <div className="flex items-center gap-2 text-slate-500 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                Loading user details...
+              <div className="flex items-center gap-2 text-slate-500 text-sm py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+                <span>Loading user profile...</span>
               </div>
             ) : detailUser ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-6">
+                <div className="flex items-start sm:items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl orange-gradient flex items-center justify-center text-white font-bold text-xl shadow-md shrink-0">
                     {detailUser.name?.charAt(0)?.toUpperCase()}
                   </div>
-                  <div className="min-w-0">
+                  <div className="space-y-1">
+                    <DialogTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 leading-snug">
+                      {detailUser.name}
+                    </DialogTitle>
                     <div className="flex flex-wrap items-center gap-2">
-                      <DialogTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 truncate">
-                        {detailUser.name}
-                      </DialogTitle>
                       <Badge
                         variant="outline"
                         className={`text-[10px] font-bold ${
-                          detailUser.role === "ADMIN"
+                          detailUser.role === "SUPER_ADMIN" || detailUser.role === "ADMIN"
                             ? "bg-purple-50 text-purple-700 border-purple-200"
                             : detailUser.role === "SELLER"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
@@ -537,9 +306,6 @@ export default function AdminAllUsersPage() {
                         {detailUser.status}
                       </Badge>
                     </div>
-                    <DialogDescription className="text-xs text-slate-500 font-mono mt-0.5 truncate">
-                      ID: {detailUser._id}
-                    </DialogDescription>
                   </div>
                 </div>
 
@@ -551,14 +317,14 @@ export default function AdminAllUsersPage() {
                       size="sm"
                       onClick={(e) => handleDelete(detailUser._id, e)}
                       disabled={deletingId === detailUser._id}
-                      className="text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 self-start sm:self-center shrink-0"
+                      className="text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 shrink-0 self-start sm:self-center font-semibold rounded-xl"
                     >
                       {deletingId === detailUser._id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5 shrink-0" />
                       ) : (
-                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5 shrink-0" />
                       )}
-                      Delete User
+                      <span>Delete User</span>
                     </Button>
                   )}
               </div>
@@ -568,23 +334,24 @@ export default function AdminAllUsersPage() {
           </DialogHeader>
 
           {detailLoading ? (
-            <div className="p-12 text-center text-slate-400 text-xs">
-              Fetching associated storefronts, listings, and quotes...
+            <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span>Fetching associated storefronts, listings, and quotes...</span>
             </div>
           ) : detailUser ? (
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {/* Modal Tabs Navigation */}
-              <div className="flex items-center gap-1 px-4 sm:px-6 border-b border-slate-100 bg-slate-50/50 overflow-x-auto shrink-0">
+              <div className="flex items-center gap-2 px-6 border-b border-slate-200 bg-slate-50/50 overflow-x-auto shrink-0">
                 <button
                   onClick={() => setActiveTab("account")}
-                  className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                  className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                     activeTab === "account"
                       ? "border-primary text-primary"
                       : "border-transparent text-slate-500 hover:text-slate-900"
                   }`}
                 >
-                  <Users className="w-3.5 h-3.5 inline mr-1.5" />
-                  Account Details
+                  <Users className="w-3.5 h-3.5 shrink-0" />
+                  <span>Account Details</span>
                 </button>
 
                 {detailUser.role === "SELLER" && (
@@ -592,27 +359,27 @@ export default function AdminAllUsersPage() {
                     {company && (
                       <button
                         onClick={() => setActiveTab("company")}
-                        className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                        className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                           activeTab === "company"
                             ? "border-primary text-primary"
                             : "border-transparent text-slate-500 hover:text-slate-900"
                         }`}
                       >
-                        <Building2 className="w-3.5 h-3.5 inline mr-1.5" />
-                        Company Profile
+                        <Building2 className="w-3.5 h-3.5 shrink-0" />
+                        <span>Company Profile</span>
                       </button>
                     )}
 
                     <button
                       onClick={() => setActiveTab("products")}
-                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === "products"
                           ? "border-primary text-primary"
                           : "border-transparent text-slate-500 hover:text-slate-900"
                       }`}
                     >
-                      <Package className="w-3.5 h-3.5 inline mr-1.5" />
-                      Products ({products.length})
+                      <Package className="w-3.5 h-3.5 shrink-0" />
+                      <span>Products ({products.length})</span>
                     </button>
                   </>
                 )}
@@ -621,71 +388,81 @@ export default function AdminAllUsersPage() {
                   <>
                     <button
                       onClick={() => setActiveTab("enquiries")}
-                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === "enquiries"
                           ? "border-primary text-primary"
                           : "border-transparent text-slate-500 hover:text-slate-900"
                       }`}
                     >
-                      <MessageSquare className="w-3.5 h-3.5 inline mr-1.5" />
-                      Quote Requests ({buyerEnquiries.length})
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                      <span>Quote Requests ({buyerEnquiries.length})</span>
                     </button>
 
                     <button
                       onClick={() => setActiveTab("wishlist")}
-                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
+                      className={`py-3 px-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === "wishlist"
                           ? "border-primary text-primary"
                           : "border-transparent text-slate-500 hover:text-slate-900"
                       }`}
                     >
-                      <Heart className="w-3.5 h-3.5 inline mr-1.5" />
-                      Wishlist ({wishlist.length})
+                      <Heart className="w-3.5 h-3.5 shrink-0" />
+                      <span>Wishlist ({wishlist.length})</span>
                     </button>
                   </>
                 )}
               </div>
 
               {/* Tab Content Body */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* 1. Account Details Tab */}
                 {activeTab === "account" && (
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Full Name</span>
                         <p className="text-sm font-bold text-slate-900">{detailUser.name}</p>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Email Address</span>
-                        <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5 truncate">
+                        <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                           <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span className="truncate">{detailUser.email}</span>
                         </p>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Phone Number</span>
                         <p className="text-sm font-bold text-slate-900 font-mono flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {detailUser.phone || "Not provided"}
+                          <span>{detailUser.phone || "Not provided"}</span>
                         </p>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Account Role</span>
                         <p className="text-sm font-bold text-slate-900 uppercase">{detailUser.role}</p>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Joined Date</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {formatDate(detailUser.createdAt)}
+                          <span>
+                            {new Date(detailUser.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </span>
                         </p>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Last Login</span>
                         <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {formatDateTime(detailUser.lastLoginAt)}
+                          <span>
+                            {detailUser.lastLoginAt
+                              ? new Date(detailUser.lastLoginAt).toLocaleString()
+                              : "Never logged in"}
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -699,162 +476,244 @@ export default function AdminAllUsersPage() {
                       <div className="space-y-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                           <div className="flex items-center gap-3">
-                            <Building2 className="w-8 h-8 text-primary shrink-0" />
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                              <Building2 className="w-5 h-5" />
+                            </div>
                             <div className="min-w-0">
                               <h3 className="font-bold text-base text-slate-900 truncate">{company.name}</h3>
-                              <p className="text-xs text-slate-500 font-mono truncate">Slug: {company.slug}</p>
+                              <p className="text-xs text-slate-500 font-mono">Slug: {company.slug}</p>
                             </div>
                           </div>
-                          <Badge variant="outline" className={company.isApproved ? "status-approved shrink-0" : "status-pending shrink-0"}>
+                          <Badge variant="outline" className={`text-[10px] font-bold shrink-0 self-start sm:self-center ${company.isApproved ? "status-approved" : "status-pending"}`}>
                             {company.isApproved ? "Approved Storefront" : "Pending Verification"}
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">GST / Tax ID</span>
                             <p className="text-xs font-mono font-bold text-slate-800">{company.gstNumber || "N/A"}</p>
                           </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Establishment Year</span>
                             <p className="text-xs font-bold text-slate-800">{company.establishedYear || "N/A"}</p>
                           </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Company Phone</span>
                             <p className="text-xs font-mono font-bold text-slate-800">{company.phone || "N/A"}</p>
                           </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Company Email</span>
                             <p className="text-xs font-bold text-slate-800 truncate">{company.email || "N/A"}</p>
                           </div>
                           {company.website && (
-                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1 sm:col-span-2">
+                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1 sm:col-span-2">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Website</span>
                               <a
                                 href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 truncate"
+                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1.5 truncate"
                               >
-                                <span className="truncate">{company.website}</span> <ExternalLink className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{company.website}</span>
+                                <ExternalLink className="w-3 h-3 shrink-0" />
                               </a>
                             </div>
                           )}
                         </div>
 
                         {company.description && (
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Description</span>
                             <p className="text-xs text-slate-700 leading-relaxed">{company.description}</p>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-slate-400 text-xs">
+                      <div className="text-center py-10 text-slate-400 text-xs">
                         No company profile registered for this account.
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* 3. Products Added Tab */}
+                {/* 3. Products Added Tab (with Pagination) */}
                 {activeTab === "products" && (
-                  <div>
+                  <div className="space-y-4">
                     {products.length === 0 ? (
                       <div className="text-center py-12 text-slate-400 text-xs">
                         No products added by this user.
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {products.map((p: any) => (
-                          <div
-                            key={p._id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100/80 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-200 relative shrink-0">
-                                {p.images?.[0] ? (
-                                  <Image
-                                    src={p.images[0]}
-                                    alt={p.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                ) : (
-                                  <Package className="w-5 h-5 text-slate-400 m-auto" />
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-xs text-slate-900 truncate">{p.name}</h4>
-                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                  <span>Ref: {p.referenceNumber}</span>
-                                  <span>•</span>
-                                  <span>{p.currency} {p.price?.toLocaleString()}</span>
-                                  <span>•</span>
-                                  <span>{p.views ?? 0} Views</span>
+                      <>
+                        <div className="space-y-3">
+                          {paginatedProducts.map((p: any) => (
+                            <div
+                              key={p._id}
+                              className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                            >
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 relative shrink-0 border border-slate-200">
+                                  {p.images?.[0] ? (
+                                    <Image
+                                      src={p.images[0]}
+                                      alt={p.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <Package className="w-6 h-6 text-slate-400 m-auto" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 truncate" title={p.name}>
+                                    {p.name}
+                                  </h4>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 font-mono">
+                                    <span className="bg-slate-200/60 px-1.5 py-0.5 rounded text-[10px] text-slate-700">
+                                      Ref: {p.referenceNumber}
+                                    </span>
+                                    <span>•</span>
+                                    <span className="font-bold text-slate-900">{p.currency} {p.price?.toLocaleString()}</span>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1 text-slate-600">
+                                      <Eye className="w-3 h-3 text-slate-400 shrink-0" />
+                                      <span>{p.views ?? 0} Views</span>
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-                              <Badge
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 w-full sm:w-auto justify-between sm:justify-end">
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] font-bold px-2 py-0.5 ${
+                                    p.status === "APPROVED"
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                      : p.status === "PENDING"
+                                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                                      : "bg-rose-50 text-rose-700 border-rose-200"
+                                  }`}
+                                >
+                                  {p.status}
+                                </Badge>
+                                {p.slug && (
+                                  <Link href={`/products/${p.slug}`} target="_blank">
+                                    <Button size="sm" variant="outline" className="h-8 text-xs font-semibold px-3 rounded-lg border-slate-200 hover:bg-white hover:text-primary flex items-center gap-1.5">
+                                      <span>View</span>
+                                      <ExternalLink className="w-3 h-3 shrink-0" />
+                                    </Button>
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Pagination Bar for Products */}
+                        {totalProductsPages > 1 && (
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/80 text-xs">
+                            <span className="text-slate-500 font-medium">
+                              Showing <strong className="text-slate-900">{(productsPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong className="text-slate-900">{Math.min(productsPage * ITEMS_PER_PAGE, products.length)}</strong> of <strong className="text-slate-900">{products.length}</strong> products
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
                                 variant="outline"
-                                className={`text-[10px] font-bold ${
-                                  p.status === "APPROVED"
-                                    ? "status-approved"
-                                    : p.status === "PENDING"
-                                    ? "status-pending"
-                                    : "status-rejected"
-                                }`}
+                                disabled={productsPage === 1}
+                                onClick={() => setProductsPage((p) => Math.max(1, p - 1))}
+                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
                               >
-                                {p.status}
-                              </Badge>
-                              <Link href={`/products/${p.slug}`} target="_blank">
-                                <Button size="sm" variant="ghost" className="h-7 text-xs">
-                                  View <ExternalLink className="w-3 h-3 ml-1" />
-                                </Button>
-                              </Link>
+                                <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                                <span>Prev</span>
+                              </Button>
+                              <span className="text-slate-600 font-bold px-2 font-mono text-[11px]">
+                                {productsPage} / {totalProductsPages}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={productsPage === totalProductsPages}
+                                onClick={() => setProductsPage((p) => Math.min(totalProductsPages, p + 1))}
+                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                              >
+                                <span>Next</span>
+                                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                              </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
 
-                {/* 4. Quote Requests Tab */}
+                {/* 4. Quote Requests Tab (with Pagination) */}
                 {activeTab === "enquiries" && (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {buyerEnquiries.length === 0 ? (
                       <div className="text-center py-12 text-slate-400 text-xs">
-                        No quote requests submitted by this buyer.
+                        No quote requests linked to this account.
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Submitted Quote Requests ({buyerEnquiries.length})
-                        </h4>
-                        {buyerEnquiries.map((e: any) => (
-                          <div
-                            key={e._id}
-                            className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-bold text-xs text-slate-900 truncate">
-                                {e.product?.name ?? "Product Inquiry"}
-                              </span>
-                              <Badge variant="outline" className="text-[10px] font-bold status-pending shrink-0">
-                                {e.status?.replace(/_/g, " ")}
-                              </Badge>
+                      <>
+                        <div className="space-y-3">
+                          {paginatedBuyerEnquiries.map((e: any) => (
+                            <div
+                              key={e._id}
+                              className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2.5"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                                  {e.product?.name ?? "Product Inquiry"}
+                                </span>
+                                <Badge variant="outline" className="text-[10px] font-bold bg-amber-50 text-amber-700 border-amber-200 shrink-0">
+                                  {e.status?.replace(/_/g, " ")}
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 font-mono bg-white p-2.5 rounded-lg border border-slate-100">
+                                <div><span className="text-slate-400">Ref:</span> {e.referenceNumber}</div>
+                                <div><span className="text-slate-400">Qty:</span> {e.quantity || "N/A"}</div>
+                                <div><span className="text-slate-400">Budget:</span> {e.budget || "N/A"}</div>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 font-mono">
-                              <div>Ref: {e.referenceNumber}</div>
-                              <div>Qty: {e.quantity || "N/A"}</div>
-                              <div>Budget: {e.budget || "N/A"}</div>
+                          ))}
+                        </div>
+
+                        {/* Pagination Bar for Enquiries */}
+                        {totalEnquiriesPages > 1 && (
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/80 text-xs">
+                            <span className="text-slate-500 font-medium">
+                              Showing <strong className="text-slate-900">{(enquiriesPage - 1) * ITEMS_PER_PAGE + 1}</strong>–<strong className="text-slate-900">{Math.min(enquiriesPage * ITEMS_PER_PAGE, buyerEnquiries.length)}</strong> of <strong className="text-slate-900">{buyerEnquiries.length}</strong> requests
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={enquiriesPage === 1}
+                                onClick={() => setEnquiriesPage((p) => Math.max(1, p - 1))}
+                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                              >
+                                <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                                <span>Prev</span>
+                              </Button>
+                              <span className="text-slate-600 font-bold px-2 font-mono text-[11px]">
+                                {enquiriesPage} / {totalEnquiriesPages}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={enquiriesPage === totalEnquiriesPages}
+                                onClick={() => setEnquiriesPage((p) => Math.min(totalEnquiriesPages, p + 1))}
+                                className="h-8 text-xs font-semibold px-2.5 rounded-lg border-slate-200 flex items-center gap-1"
+                              >
+                                <span>Next</span>
+                                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                              </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -871,20 +730,21 @@ export default function AdminAllUsersPage() {
                         {wishlist.map((item: any) => (
                           <div
                             key={item._id}
-                            className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3"
+                            className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 flex items-center justify-between gap-3"
                           >
-                            <div className="min-w-0 flex-1">
-                              <h5 className="font-bold text-xs text-slate-900 truncate">
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <h5 className="font-bold text-xs text-slate-900 truncate" title={item.product?.name}>
                                 {item.product?.name ?? "Product Item"}
                               </h5>
-                              <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                              <p className="text-[11px] text-slate-600 font-mono font-semibold">
                                 {item.product?.currency} {item.product?.price?.toLocaleString()}
                               </p>
                             </div>
                             {item.product?.slug && (
                               <Link href={`/products/${item.product.slug}`} target="_blank">
-                                <Button size="sm" variant="ghost" className="h-7 text-xs shrink-0">
-                                  Open <ExternalLink className="w-3 h-3 ml-1" />
+                                <Button size="sm" variant="outline" className="h-8 text-xs font-semibold px-3 rounded-lg border-slate-200 flex items-center gap-1.5 shrink-0">
+                                  <span>Open</span>
+                                  <ExternalLink className="w-3 h-3 shrink-0" />
                                 </Button>
                               </Link>
                             )}
