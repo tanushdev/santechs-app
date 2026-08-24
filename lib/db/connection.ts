@@ -12,13 +12,10 @@ import "@/lib/db/models/Notification.model";
 import "@/lib/db/models/Wishlist.model";
 import "@/lib/db/models/ActivityLog.model";
 
-const FALLBACK_URI =
-  "mongodb+srv://db:db123@xeecluster.mnci11j.mongodb.net/santechs?retryWrites=true&w=majority&appName=XeeCluster";
-
 function getMongoUri(): string {
-  const uri = process.env.MONGODB_URI || FALLBACK_URI;
+  const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error("Please define the MONGODB_URI environment variable");
+    throw new Error("Please define the MONGODB_URI environment variable in .env.local");
   }
   return uri;
 }

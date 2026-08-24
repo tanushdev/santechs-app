@@ -3,6 +3,7 @@
 import { use, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   Search,
   SlidersHorizontal,
@@ -18,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Download,
+  PackageX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -433,6 +435,32 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
               </div>
             </div>
           </div>
+
+          {/* Type Selector Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-slate-100 no-scrollbar">
+            {[
+              { label: "All Inventory", value: null },
+              { label: "Machines", value: "MACHINE" },
+              { label: "Spare Parts", value: "SPARE_PART" },
+              { label: "Raw Materials", value: "RAW_MATERIAL" },
+              { label: "Services", value: "SERVICE" },
+            ].map((tab) => {
+              const isSelected = (!selectedType && tab.value === null) || selectedType === tab.value;
+              return (
+                <button
+                  key={tab.label}
+                  onClick={() => updateSingleFilter("type", tab.value)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                    isSelected
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -479,13 +507,21 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
           {/* Right Product Grid */}
           <main className="flex-1 min-w-0">
             {/* Header stats */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-xl font-bold font-heading text-slate-900">
-                  Industrial Machinery Catalog
+                  {selectedType === "RAW_MATERIAL"
+                    ? "Raw Materials Exchange"
+                    : selectedType === "SERVICE"
+                    ? "Industrial Technical Services"
+                    : selectedType === "SPARE_PART"
+                    ? "Machinery Spare Parts & Components"
+                    : selectedType === "MACHINE"
+                    ? "Industrial Machinery Catalog"
+                    : "Industrial Machinery & Materials Catalog"}
                 </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Showing {products.length} of {total} verified equipment listings
+                <p className="text-xs text-slate-500 mt-1">
+                  Showing {products.length} of {total} verified listings
                 </p>
               </div>
 
@@ -513,23 +549,47 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8 max-w-md mx-auto space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
-                  <Search className="w-6 h-6 stroke-[1.5]" />
+              <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 max-w-lg mx-auto space-y-4 shadow-xs">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
+                  <PackageX className="w-7 h-7 stroke-[1.5]" />
                 </div>
-                <h3 className="font-bold text-base text-slate-900 font-heading">
-                  No matching machinery found
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Try unchecking specific category checkboxes or clearing continent/search filters.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(pathname)}
-                  className="rounded-xl text-xs font-bold border-slate-200"
-                >
-                  Reset All Filters
-                </Button>
+                <div className="space-y-1.5">
+                  <h3 className="font-bold text-lg text-slate-900 font-heading">
+                    {selectedType === "RAW_MATERIAL"
+                      ? "No Raw Materials Currently Listed"
+                      : selectedType === "SERVICE"
+                      ? "No Services Currently Listed"
+                      : selectedType === "SPARE_PART"
+                      ? "No Spare Parts Found"
+                      : "No Matching Machinery Found"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    {selectedType === "RAW_MATERIAL"
+                      ? "There are currently no active raw material lots in this section. Verified polymer & feedstock suppliers onboard inventory regularly. You can submit a custom sourcing RFQ to our procurement desk."
+                      : selectedType === "SERVICE"
+                      ? "There are currently no engineering service providers listed in this category. Contact our technical desk to request erection, dismantling, or plant relocation support."
+                      : selectedType === "SPARE_PART"
+                      ? "No precision spare parts match your selected filters. Try broadening your criteria or submit a part RFQ."
+                      : "No machinery listings match your active filters. Try clearing specific category or continent selections."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <Link href="/sell">
+                    <Button size="sm" className="bg-[#ff7759] hover:bg-[#ff7759]/90 text-white font-bold rounded-xl text-xs h-9 px-4 cursor-pointer">
+                      Submit Sourcing Request / RFQ
+                    </Button>
+                  </Link>
+                  {(activeFiltersCount > 0 || selectedType) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(pathname)}
+                      className="rounded-xl text-xs font-bold border-slate-200 h-9 px-4 cursor-pointer"
+                    >
+                      View All Inventory
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
               <div

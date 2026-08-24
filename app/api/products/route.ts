@@ -30,7 +30,15 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Number(searchParams.get("limit") ?? 20), 100);
 
     const statusParam = searchParams.get("status") || ProductStatus.APPROVED;
+    const typeParam = searchParams.get("type");
     const andConditions: any[] = [{ status: statusParam }];
+
+    if (typeParam && typeParam !== "ALL") {
+      const typeList = typeParam.split(",").map((t) => t.trim().toUpperCase()).filter(Boolean);
+      if (typeList.length > 0) {
+        andConditions.push({ type: { $in: typeList } });
+      }
+    }
 
     // Text search via Atlas Search (or regex fallback)
     if (search) {

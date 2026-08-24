@@ -646,9 +646,19 @@ export default function Navbar({ initialSession, portal: propPortal }: NavbarPro
                 {!isSellPage ? (
                   navGroups.map((group) => (
                     <div key={group.label} className="space-y-1 py-1">
-                      <p className="px-3 py-1 text-xs font-bold text-[#ff7759] uppercase tracking-wider font-mono">
-                        {group.label}
-                      </p>
+                      {group.categories.length > 0 ? (
+                        <p className="px-3 py-1 text-xs font-bold text-[#ff7759] uppercase tracking-wider font-mono">
+                          {group.label}
+                        </p>
+                      ) : (
+                        <Link
+                          href={group.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="block px-3 py-2 text-xs font-bold text-slate-800 hover:text-[#ff7759] uppercase tracking-wider font-mono hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          {group.label}
+                        </Link>
+                      )}
                       {group.categories.map((cat) => (
                         <div key={cat.slug} className="pl-2 space-y-0.5">
                           <Link
