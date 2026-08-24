@@ -95,7 +95,7 @@ export default function NotificationsList() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-[#75758a]">
             <Bell className="w-4 h-4 text-black" />
-            <span>Alert Center</span>
+            <span>Recent Updates</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-normal tracking-tight text-black font-sans">
             Notifications

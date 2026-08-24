@@ -225,22 +225,6 @@ export default function DashboardHeader() {
                 ))}
               </div>
             )}
-
-            <DropdownMenuSeparator />
-            <div className="p-1">
-              <Link
-                href={
-                  isAdmin
-                    ? "/admin/dashboard"
-                    : session?.user?.role === "SELLER"
-                    ? "/seller/dashboard"
-                    : "/buyer/dashboard"
-                }
-                className="block text-center text-xs font-bold text-[#ff7759] hover:underline py-1"
-              >
-                Go to Alert Center
-              </Link>
-            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
