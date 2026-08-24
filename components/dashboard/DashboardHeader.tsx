@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Bell, LogOut, Building2, ShieldCheck, Loader2, Menu, UserCheck } from "lucide-react";
+import { Bell, LogOut, Building2, ShieldCheck, Loader2, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -302,18 +302,6 @@ export default function DashboardHeader() {
               )}
 
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={async () => {
-                  const targetPortal = isAdmin ? "admin" : isSeller ? "seller" : "buyer";
-                  await fetch(`/api/auth/role-session?portal=${targetPortal}`, { method: "DELETE" });
-                  await signOut({ redirect: false });
-                  window.location.href = "/super_admin";
-                }}
-                className="cursor-pointer text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 p-2 font-medium"
-              >
-                <UserCheck className="w-4 h-4 text-slate-500" />
-                <span>Switch Account / Portal</span>
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={async () => {
                   const targetPortal = isAdmin ? "admin" : isSeller ? "seller" : "buyer";
