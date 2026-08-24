@@ -45,13 +45,27 @@ export default async function BuyerDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold font-heading">
-          My Dashboard
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Track your enquiries and saved listings
-        </p>
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-100/40 via-[#ff7759]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#ff7759] font-bold">
+              Buyer Portal
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
+              Hello, {session.user.name || "Customer"}!
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm mt-1 max-w-2xl">
+              Track your machine RFQ quotations, saved machinery wishlist, and supplier negotiations.
+            </p>
+          </div>
+          <Link href="/products">
+            <Button className="rounded-xl bg-black text-white hover:bg-slate-800 font-bold px-5 h-10 text-xs shadow-xs cursor-pointer">
+              <Package className="w-4 h-4 mr-1.5" />
+              Browse Machinery
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Quick Stats */}

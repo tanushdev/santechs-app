@@ -31,6 +31,7 @@ export function UnifiedLoginForm({
   const [selectedRole, setSelectedRole] = useState<"BUYER" | "SELLER">(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successGreeting, setSuccessGreeting] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialRole) {
@@ -45,6 +46,7 @@ export function UnifiedLoginForm({
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
+    setSuccessGreeting(null);
 
     if (data.email.toLowerCase() === "admin@santechs.com") {
       setError("Super Admin accounts must log in via the dedicated administrator portal.");
@@ -67,18 +69,25 @@ export function UnifiedLoginForm({
     } else {
       const session = await getSession();
       const role = session?.user?.role;
+      const userName = session?.user?.name || (role === "SUPER_ADMIN" || role === "ADMIN" ? "Administrator" : "User");
+
+      const greeting = `Welcome back, ${userName}!`;
+
+      setSuccessGreeting(greeting);
 
       await fetch("/api/auth/role-session", { method: "POST" });
 
-      if (rawCallbackUrl && rawCallbackUrl !== "/" && rawCallbackUrl !== "") {
-        window.location.href = rawCallbackUrl;
-      } else if (role === "SELLER") {
-        window.location.href = "/seller/dashboard";
-      } else if (role === "SUPER_ADMIN" || role === "ADMIN") {
-        window.location.href = "/admin/dashboard";
-      } else {
-        window.location.href = "/";
-      }
+      setTimeout(() => {
+        if (rawCallbackUrl && rawCallbackUrl !== "/" && rawCallbackUrl !== "") {
+          window.location.href = rawCallbackUrl;
+        } else if (role === "SELLER") {
+          window.location.href = "/seller/dashboard";
+        } else if (role === "SUPER_ADMIN" || role === "ADMIN") {
+          window.location.href = "/admin/dashboard";
+        } else {
+          window.location.href = "/";
+        }
+      }, 700);
     }
   };
 
@@ -221,6 +230,14 @@ export function UnifiedLoginForm({
                 </button>
               </div>
             </div>
+
+            {/* Success Greeting Banner */}
+            {successGreeting && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>{successGreeting}</span>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (

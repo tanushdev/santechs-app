@@ -22,7 +22,7 @@ export default async function BuyerLayout({
     primarySession?.user?.role === UserRole.ADMIN ||
     primarySession?.user?.role === UserRole.SUPER_ADMIN
   ) {
-    redirect("/admin/sellers");
+    redirect("/admin/dashboard");
   }
 
   const buyerSession = await getRoleSession([UserRole.BUYER]);

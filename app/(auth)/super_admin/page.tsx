@@ -23,6 +23,7 @@ function SuperAdminLoginForm() {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successGreeting, setSuccessGreeting] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -40,6 +41,7 @@ function SuperAdminLoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
+    setSuccessGreeting(null);
     if (data.email.toLowerCase() !== "admin@santechs.com") {
       setError("This login portal is reserved for administrators only.");
       return;
@@ -72,8 +74,11 @@ function SuperAdminLoginForm() {
         return;
       }
 
+      setSuccessGreeting("Welcome back, Administrator! Directing to dashboard...");
       await fetch("/api/auth/role-session", { method: "POST" });
-      window.location.href = "/admin/sellers";
+      setTimeout(() => {
+        window.location.href = "/admin/dashboard";
+      }, 700);
     }
   };
 
@@ -152,6 +157,14 @@ function SuperAdminLoginForm() {
             >
               <RefreshCw className="w-3 h-3" /> Log Out Current Account First
             </button>
+          </div>
+        )}
+
+        {/* Success Greeting Notification */}
+        {successGreeting && (
+          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 text-xs font-bold text-center leading-normal flex items-center justify-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>{successGreeting}</span>
           </div>
         )}
 

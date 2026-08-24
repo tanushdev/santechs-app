@@ -138,7 +138,7 @@ function getDashboardUrl(role: UserRole): string {
   switch (role) {
     case UserRole.SUPER_ADMIN:
     case UserRole.ADMIN:
-      return "/admin/sellers";
+      return "/admin/dashboard";
     case UserRole.SELLER:
       return "/seller/dashboard";
     case UserRole.BUYER:

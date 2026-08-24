@@ -82,9 +82,10 @@ export function UnifiedRegisterForm({
 
     const result = await registerUser(payload);
     if (result.success) {
-      setSuccess(result.message ?? "Account created successfully!");
+      const greeting = `Welcome, ${data.name}! Your account has been created successfully.`;
+      setSuccess(greeting);
       const targetLogin = selectedRole === "SELLER" ? "/login?role=seller" : "/login";
-      setTimeout(() => router.push(targetLogin), 2200);
+      setTimeout(() => router.push(targetLogin), 2000);
     } else {
       setError(result.error ?? "Registration failed. Please try again.");
     }

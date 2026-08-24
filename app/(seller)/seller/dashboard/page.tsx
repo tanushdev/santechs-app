@@ -87,10 +87,10 @@ export default async function SellerDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tracking-tight">
-              Seller Dashboard
+              Hello, {session.user.name || "Partner"}!
             </h1>
             <p className="text-slate-600 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Welcome back, <strong className="text-slate-900 font-semibold">{session.user.name}</strong>. Monitor machinery views, incoming buyer enquiries, and complete your storefront verification.
+              Monitor your machinery views, respond to incoming buyer enquiries, and manage your storefront verification.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">

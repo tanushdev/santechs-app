@@ -163,11 +163,11 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold font-heading">
-          Welcome back, {session.user.name?.split(" ")[0]} 👋
+        <h1 className="text-2xl font-bold font-heading text-slate-900">
+          Welcome back, {session.user.name || "Administrator"}!
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Here&apos;s what&apos;s happening on Santechs today.
+          Here&apos;s an overview of marketplace activity, pending sellers, and machinery verification logs.
         </p>
       </div>
 

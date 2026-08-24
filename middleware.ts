@@ -107,7 +107,7 @@ export default async function middleware(req: NextRequest) {
         adminToken?.role === UserRole.ADMIN ||
         adminToken?.role === UserRole.SUPER_ADMIN
       ) {
-        return NextResponse.redirect(new URL("/admin/sellers", req.url));
+        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
       }
 
       const loginUrl = new URL("/login", req.url);
