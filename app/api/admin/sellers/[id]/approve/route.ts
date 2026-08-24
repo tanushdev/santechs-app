@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connection";
 import User from "@/lib/db/models/User.model";
 import Company from "@/lib/db/models/Company.model";
+import Product from "@/lib/db/models/Product.model";
 import Notification from "@/lib/db/models/Notification.model";
 import { auth } from "@/lib/auth/config";
-import { NotificationType, UserRole, UserStatus } from "@/types";
+import { NotificationType, ProductStatus, UserRole, UserStatus } from "@/types";
 import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function POST(
@@ -40,6 +41,12 @@ export async function POST(
         await company.save();
       }
     }
+
+    // Approve all pending products submitted by this seller
+    await Product.updateMany(
+      { seller: user._id, status: ProductStatus.PENDING },
+      { status: ProductStatus.APPROVED }
+    );
 
     // Create Notification
     await Notification.create({

@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth/config";
+import { getRoleSession } from "@/lib/auth/roleAuth";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/types";
-import SellerSidebar from "@/components/seller/SellerSidebar";
+import ClientSellerSidebar from "@/components/seller/ClientSellerSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { connectToDatabase } from "@/lib/db/connection";
 import Company from "@/lib/db/models/Company.model";
@@ -12,10 +12,10 @@ export default async function SellerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getRoleSession([UserRole.SELLER]);
 
   if (!session || session.user.role !== UserRole.SELLER) {
-    redirect("/login");
+    redirect("/login?role=seller");
   }
 
   await connectToDatabase();
@@ -24,7 +24,7 @@ export default async function SellerLayout({
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <SellerSidebar isApproved={isApproved} />
+      <ClientSellerSidebar isApproved={isApproved} />
       <div className="flex-1 pl-0 lg:pl-64 h-full flex flex-col overflow-hidden min-w-0">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#faf9f6]">

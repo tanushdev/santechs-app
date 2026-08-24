@@ -29,14 +29,44 @@ export async function GET(req: NextRequest) {
 
     const [enquiries, total] = await Promise.all([
       Enquiry.find(query)
-        .populate("product", "name referenceNumber slug")
-        .populate("buyer", "name email phone")
+        .populate({
+          path: "product",
+          select: "name referenceNumber slug category subCategory images",
+          strictPopulate: false,
+          populate: [
+            { path: "category", select: "name slug type", strictPopulate: false },
+            { path: "subCategory", select: "name slug", strictPopulate: false },
+          ],
+        })
+        .populate({ path: "buyer", select: "name email phone company country", strictPopulate: false })
         .populate({
           path: "seller",
           select: "name email phone company",
+          strictPopulate: false,
           populate: {
             path: "company",
-            select: "name phone businessType"
+            select: "name phone businessType isVerified",
+            strictPopulate: false,
+          }
+        })
+        .populate({
+          path: "originalSeller",
+          select: "name email phone company",
+          strictPopulate: false,
+          populate: {
+            path: "company",
+            select: "name phone businessType isVerified",
+            strictPopulate: false,
+          }
+        })
+        .populate({
+          path: "assignedSeller",
+          select: "name email phone company",
+          strictPopulate: false,
+          populate: {
+            path: "company",
+            select: "name phone businessType isVerified",
+            strictPopulate: false,
           }
         })
         .sort({ createdAt: -1 })

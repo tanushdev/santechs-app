@@ -324,7 +324,7 @@ export default function SellerGuidelinesPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 w-full sm:w-auto">
-              <Link href="/seller/register" className="w-full sm:w-auto">
+              <Link href="/register?role=seller" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto bg-[#ff7759] hover:bg-[#ff7759]/90 text-white font-bold px-8 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#ff7759]/30 h-12">
                   <span>Register as Seller</span>
                   <ArrowRight className="w-4 h-4" />

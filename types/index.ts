@@ -114,6 +114,7 @@ export interface IAddress {
   city: string;
   state: string;
   country: string;
+  continent?: string;
   pincode?: string;
 }
 
@@ -129,10 +130,12 @@ export interface ICategory {
   name: string;
   slug: string;
   type: CategoryType;
+  header?: string; // Level 1 Header (e.g. Non-Woven, Synthetic Filament, Plastic Extrusion, Spare Parts)
   description?: string;
   icon?: string;
   image?: string;
-  parent?: string; // ref Category
+  parent?: string | ICategory; // ref Category
+  subcategories?: ICategory[];
   isActive: boolean;
   order: number;
   createdAt: Date;
@@ -158,6 +161,7 @@ export interface IProduct {
   slug: string;
   description: string;
   category: string; // ref Category
+  subCategory?: string; // ref Category
   brand?: string; // ref Brand
   status: ProductStatus;
   condition: ProductCondition;
@@ -212,7 +216,10 @@ export interface IEnquiry {
   referenceNumber: string;
   product: string; // ref Product
   buyer: string; // ref User
-  seller: string; // ref User
+  seller: string; // ref User (current/assigned)
+  originalSeller?: string; // ref User (original product lister)
+  assignedSeller?: string; // ref User (seller chosen by admin)
+  isForwardedToSeller?: boolean;
   status: EnquiryStatus;
   // Buyer info
   buyerName: string;
@@ -233,6 +240,7 @@ export interface IEnquiry {
   // Timestamps
   contactedBuyerAt?: Date;
   sellerAssignedAt?: Date;
+  forwardedAt?: Date;
   dealClosedAt?: Date;
   createdAt: Date;
   updatedAt: Date;

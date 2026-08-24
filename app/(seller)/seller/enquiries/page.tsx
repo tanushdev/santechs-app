@@ -16,7 +16,10 @@ export default async function SellerEnquiriesPage() {
 
   await connectToDatabase();
 
-  const enquiries = await Enquiry.find({ seller: session.user.id })
+  const enquiries = await Enquiry.find({
+    seller: session.user.id,
+    isForwardedToSeller: true,
+  })
     .populate("product", "name images price currency referenceNumber slug")
     .sort({ createdAt: -1 })
     .lean();

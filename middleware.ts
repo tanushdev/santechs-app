@@ -5,36 +5,34 @@ import { UserRole } from "@/types";
 const PUBLIC_PATTERNS = [
   /^\/$/, 
   /^\/products/, 
-  /^\/sell/,
+  /^\/sell$/,
   /^\/about/, 
   /^\/contact/,
   /^\/how-it-works/,
   /^\/pricing/,
   /^\/guidelines/,
+  /^\/seller-guidelines/,
   /^\/terms/,
   /^\/privacy/,
   /^\/unauthorized/,
   /^\/api\/products/,
   /^\/api\/categories/,
   /^\/api\/brands/,
-];
-
-const AUTH_PATTERNS = [
+  /^\/super_admin/,
+  /^\/seller\/login/,
+  /^\/seller\/register/,
   /^\/login/,
   /^\/register/,
   /^\/forgot-password/,
   /^\/reset-password/,
   /^\/verify-email/,
-  /^\/super_admin/,
-  /^\/seller\/login/,
-  /^\/seller\/register/,
 ];
 
 export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
-  // Skip Next.js internals
+  // Skip Next.js internals & Auth endpoints
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -43,69 +41,69 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow all public routes
+  // Always allow public routes and login portals
   if (PUBLIC_PATTERNS.some((p) => p.test(pathname))) {
     return NextResponse.next();
   }
 
-  // NextAuth v5 uses "authjs.session-token" in dev and "__Secure-authjs.session-token" on HTTPS
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "santechs-secret-key-2026-secure-jwt";
   const isSecure = req.url.startsWith("https");
-  const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET, cookieName });
-  const isLoggedIn = !!token;
-  const userRole = token?.role as UserRole | undefined;
 
-  // Redirect logged-in users away from auth pages
-  if (isLoggedIn && AUTH_PATTERNS.some((p) => p.test(pathname))) {
-    const dashboardUrl = getDashboardUrl(userRole!);
-    return NextResponse.redirect(new URL(dashboardUrl, req.url));
-  }
+  // Read standard session token
+  const defaultCookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+  const nextAuthToken = await getToken({ req, secret, cookieName: defaultCookieName }).catch(() => null);
 
-  // Redirect unauthenticated users to login/super_admin
-  if (!isLoggedIn && !AUTH_PATTERNS.some((p) => p.test(pathname))) {
-    const loginPath = pathname.startsWith("/admin") ? "/super_admin" : (pathname.startsWith("/seller") ? "/seller/login" : "/login");
-    const loginUrl = new URL(loginPath, req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // Read role-scoped session tokens
+  const adminToken = await getToken({ req, secret, cookieName: "santechs_admin_session", salt: "santechs_admin_session" }).catch(() => null);
+  const sellerToken = await getToken({ req, secret, cookieName: "santechs_seller_session", salt: "santechs_seller_session" }).catch(() => null);
+  const buyerToken = await getToken({ req, secret, cookieName: "santechs_buyer_session", salt: "santechs_buyer_session" }).catch(() => null);
 
-  // Role-based protection
+  const mainRole = nextAuthToken?.role as UserRole | undefined;
+
+  // 1. Strict Admin Protection (/admin/*) -> SUPER_ADMIN or ADMIN ONLY
   if (pathname.startsWith("/admin")) {
-    if (
-      userRole !== UserRole.SUPER_ADMIN &&
-      userRole !== UserRole.ADMIN
-    ) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    const isAdmin =
+      [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(mainRole as UserRole) ||
+      [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(adminToken?.role as UserRole);
+
+    if (!isAdmin) {
+      const loginUrl = new URL("/super_admin", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
+    return NextResponse.next();
   }
 
-  if (pathname.startsWith("/seller") && !pathname.startsWith("/seller/login") && !pathname.startsWith("/seller/register")) {
-    if (userRole !== UserRole.SELLER) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
+  // 2. Strict Seller Protection (/seller/*) -> SELLER ONLY
+  if (pathname.startsWith("/seller")) {
+    const isSeller =
+      mainRole === UserRole.SELLER ||
+      sellerToken?.role === UserRole.SELLER;
+
+    if (!isSeller) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("role", "seller");
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
+    return NextResponse.next();
   }
 
+  // 3. Strict Buyer Protection (/buyer/*) -> BUYER ONLY
   if (pathname.startsWith("/buyer")) {
-    if (userRole !== UserRole.BUYER) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    const isBuyer =
+      mainRole === UserRole.BUYER ||
+      buyerToken?.role === UserRole.BUYER;
+
+    if (!isBuyer) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
+    return NextResponse.next();
   }
 
   return NextResponse.next();
-}
-
-function getDashboardUrl(role: UserRole): string {
-  switch (role) {
-    case UserRole.SUPER_ADMIN:
-    case UserRole.ADMIN:
-      return "/admin/dashboard";
-    case UserRole.SELLER:
-      return "/seller/dashboard";
-    case UserRole.BUYER:
-      return "/";
-    default:
-      return "/";
-  }
 }
 
 export const config = {

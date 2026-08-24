@@ -9,6 +9,7 @@ interface IAddress {
   city: string;
   state: string;
   country: string;
+  continent?: string;
   pincode?: string;
 }
 
@@ -20,6 +21,7 @@ export interface IProductDocument extends Document {
   slug: string;
   description: string;
   category: mongoose.Types.ObjectId;
+  subCategory?: mongoose.Types.ObjectId;
   brand?: mongoose.Types.ObjectId;
   status: ProductStatus;
   condition: ProductCondition;
@@ -66,6 +68,7 @@ const AddressSchema = new Schema<IAddress>(
     city: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
+    continent: { type: String },
     pincode: { type: String },
   },
   { _id: false }
@@ -80,6 +83,7 @@ const ProductSchema = new Schema<IProductDocument>(
     slug: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String, required: true },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
+    subCategory: { type: Schema.Types.ObjectId, ref: "Category" },
     brand: { type: Schema.Types.ObjectId, ref: "Brand" },
     status: {
       type: String,
@@ -135,7 +139,9 @@ const ProductSchema = new Schema<IProductDocument>(
 // Compound indexes for filtering (100k+ products)
 ProductSchema.index({ status: 1, isFeatured: -1, publishedAt: -1 });
 ProductSchema.index({ status: 1, category: 1 });
+ProductSchema.index({ status: 1, subCategory: 1 });
 ProductSchema.index({ status: 1, "location.country": 1 });
+ProductSchema.index({ status: 1, "location.continent": 1 });
 ProductSchema.index({ status: 1, condition: 1 });
 ProductSchema.index({ status: 1, price: 1 });
 ProductSchema.index({ seller: 1, status: 1 });

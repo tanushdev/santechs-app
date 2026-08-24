@@ -4,7 +4,7 @@ import Category from "@/lib/db/models/Category.model";
 import { auth } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { PlusCircle, Search, Eye, Archive, MessageSquare, Package } from "lucide-react";
+import { PlusCircle, Search, Eye, Archive, MessageSquare, Package, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductStatus, UserRole } from "@/types";
@@ -73,12 +73,20 @@ export default async function SellerProductsPage({
               Publish and manage your industrial machinery and materials catalog listings. Verify status reviews and update specifications.
             </p>
           </div>
-          <Link href="/seller/products/new" className="shrink-0">
-            <Button className="rounded-full bg-black text-white hover:bg-neutral-800 font-semibold px-6 py-2.5 text-xs uppercase tracking-wider">
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Add Product
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <a href="/api/admin/products/export" download>
+              <Button variant="outline" className="rounded-full border-[#e5e7eb] hover:bg-slate-50 font-semibold px-5 py-2.5 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
+                <Download className="w-3.5 h-3.5" />
+                Export CSV
+              </Button>
+            </a>
+            <Link href="/seller/products/new">
+              <Button className="rounded-full bg-black text-white hover:bg-neutral-800 font-semibold px-6 py-2.5 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
+                <PlusCircle className="w-4 h-4" />
+                Add Product
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

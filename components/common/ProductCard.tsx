@@ -9,7 +9,6 @@ import {
   Eye,
   Heart,
   ArrowRight,
-  CheckCircle2,
   Calendar,
   Zap,
 } from "lucide-react";
@@ -73,7 +72,6 @@ export default function ProductCard({
 
   const images = (product.images as string[]) ?? [];
   const location = product.location as Record<string, string> | undefined;
-  const company = product.company as Record<string, unknown> | undefined;
   const status = product.status as string;
 
   return (
@@ -174,18 +172,6 @@ export default function ProductCard({
         <p className="text-[10px] text-muted-foreground/60 mb-2">
           Ref: {product.referenceNumber as string}
         </p>
-
-        {/* Seller/Company */}
-        {Boolean(company) && (
-          <div className="flex items-center gap-1.5 mb-3">
-            {Boolean(company?.isVerified) && (
-              <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-            )}
-            <span className="text-xs text-muted-foreground truncate">
-              {company?.name as string}
-            </span>
-          </div>
-        )}
 
         {/* Location */}
         {Boolean(location) && (

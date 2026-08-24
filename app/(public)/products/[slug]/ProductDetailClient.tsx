@@ -11,7 +11,6 @@ import {
   MapPin,
   CheckCircle2,
   XCircle,
-  Building2,
   FileText,
   Wrench,
   PackageCheck,
@@ -21,7 +20,6 @@ import {
   Share2,
   Eye,
   Calendar,
-  ShieldCheck,
   Check,
   Zap,
 } from "lucide-react";
@@ -315,33 +313,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     <div className="text-xs text-slate-600 mt-0.5">
                       {[product.location.city, product.location.state, product.location.country].filter(Boolean).join(", ")}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Company / Seller Info */}
-              {product.company && (
-                <div className="border-t border-slate-100 pt-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-slate-700" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Listed By</div>
-                      <div className="font-bold text-slate-900 text-sm truncate">{product.company.name}</div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {product.company.isVerified && (
-                      <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] py-0.5 px-2 rounded-full font-semibold">
-                        <ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" /> Verified Seller
-                      </Badge>
-                    )}
-                    {product.company.establishedYear && (
-                      <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-200 py-0.5 px-2 rounded-full">
-                        Est. {product.company.establishedYear}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               )}

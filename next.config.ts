@@ -52,6 +52,14 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "50mb",
     },
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@tanstack/react-query",
+      "date-fns",
+      "clsx",
+      "tailwind-merge",
+    ],
   },
   // Exclude server-only modules from client bundle
   serverExternalPackages: ["mongoose", "nodemailer", "bcryptjs"],

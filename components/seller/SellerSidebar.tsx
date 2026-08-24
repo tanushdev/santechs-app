@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,7 +36,7 @@ export function SellerSidebarNavContent({
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full bg-sidebar">
+    <div suppressHydrationWarning className="flex flex-col h-full bg-sidebar">
       {/* Logo + Header */}
       <div className="flex items-center justify-between h-16 px-5 border-b border-sidebar-border shrink-0">
         <Link
@@ -138,6 +139,21 @@ export function SellerSidebarNavContent({
 }
 
 export default function SellerSidebar(props: SellerSidebarProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <aside
+        suppressHydrationWarning
+        className="hidden lg:block fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border"
+      />
+    );
+  }
+
   return (
     <aside
       suppressHydrationWarning

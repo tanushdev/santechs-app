@@ -5,6 +5,7 @@ export interface ICategoryDocument extends Document {
   name: string;
   slug: string;
   type: CategoryType;
+  header?: string;
   description?: string;
   icon?: string;
   image?: string;
@@ -24,6 +25,7 @@ const CategorySchema = new Schema<ICategoryDocument>(
       enum: Object.values(CategoryType),
       required: true,
     },
+    header: { type: String, trim: true },
     description: { type: String },
     icon: { type: String },
     image: { type: String },
@@ -34,6 +36,7 @@ const CategorySchema = new Schema<ICategoryDocument>(
   { timestamps: true, toJSON: { virtuals: true } }
 );
 
+CategorySchema.index({ header: 1 });
 CategorySchema.index({ type: 1, isActive: 1, order: 1 });
 CategorySchema.index({ parent: 1 });
 

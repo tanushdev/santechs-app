@@ -48,7 +48,9 @@ export async function submitEnquiry(productId: string, data: unknown) {
       referenceNumber: ref,
       product: productId,
       buyer: session.user.id,
+      originalSeller: product.seller,
       seller: product.seller,
+      isForwardedToSeller: false,
       status: EnquiryStatus.NEW,
       buyerContactShared: false,
       sellerContactShared: false,
@@ -75,12 +77,39 @@ export async function submitEnquiry(productId: string, data: unknown) {
 
     // Email admin
     const adminEmailList = admins.map((a) => a.email).join(",");
-    const templates = emailTemplates.enquiryReceived(
+    const adminTemplates = emailTemplates.enquiryReceived(
       adminEmailList,
       ref,
       product.name
     );
-    await sendEmail({ to: adminEmailList, ...templates });
+    await sendEmail({ to: adminEmailList, ...adminTemplates });
+
+    // Instantly Email Buyer with Official Quotation & Cost Estimate Breakdown
+    const buyerEmail = parsed.data.buyerEmail || session.user.email;
+    if (buyerEmail) {
+      const buyerQuotationEmail = emailTemplates.buyerQuotationCostEstimate({
+        buyerName: parsed.data.buyerName || session.user.name || "Client",
+        buyerCompany: parsed.data.buyerCompany || "Enterprise Buyer",
+        buyerEmail,
+        referenceNumber: ref,
+        productName: product.name,
+        productModel: product.machineModel || "",
+        price: product.price,
+        currency: product.currency || "INR",
+        quantity: parsed.data.quantity || 1,
+        year: product.yearOfManufacture,
+        condition: product.condition,
+        locationCountry: product.location?.country,
+        locationCity: product.location?.city,
+        timeline: parsed.data.timeline,
+        requirement: parsed.data.requirement,
+      });
+
+      await sendEmail({
+        to: buyerEmail,
+        ...buyerQuotationEmail,
+      });
+    }
 
     await ActivityLog.create({
       actor: session.user.id,
@@ -304,5 +333,77 @@ export async function getAdminEnquiries(
     };
   } catch (error) {
     return { success: false, error: "Failed to fetch enquiries." };
+  }
+}
+
+export async function assignAndForwardEnquiryToSeller(
+  enquiryId: string,
+  sellerId: string,
+  adminNotes?: string
+) {
+  try {
+    const session = await auth();
+    if (
+      !session ||
+      ![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role)
+    ) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await connectToDatabase();
+
+    const sellerUser = await User.findById(sellerId).populate("company");
+    if (!sellerUser) {
+      return { success: false, error: "Selected seller not found" };
+    }
+
+    const enquiry = await Enquiry.findByIdAndUpdate(
+      enquiryId,
+      {
+        assignedSeller: sellerId,
+        seller: sellerId,
+        isForwardedToSeller: true,
+        sellerAssignedAt: new Date(),
+        forwardedAt: new Date(),
+        status: EnquiryStatus.SELLER_ASSIGNED,
+        ...(adminNotes ? { adminNotes } : {}),
+      },
+      { returnDocument: "after" }
+    ).populate("product buyer originalSeller assignedSeller");
+
+    if (!enquiry) {
+      return { success: false, error: "Enquiry not found" };
+    }
+
+    // Notify the assigned seller
+    await Notification.create({
+      recipient: sellerId,
+      type: NotificationType.ENQUIRY_RECEIVED,
+      title: `New Buyer Lead Assigned — ${enquiry.referenceNumber}`,
+      message: `Admin routed a buyer quote request for "${(enquiry.product as any)?.name || "Machinery"}" to your storefront.`,
+      link: `/seller/enquiries`,
+      data: { enquiryId: enquiry._id, productId: enquiry.product },
+    });
+
+    await ActivityLog.create({
+      actor: session.user.id,
+      action: "ENQUIRY_FORWARDED_TO_SELLER",
+      resource: "Enquiry",
+      resourceId: enquiryId,
+      details: {
+        sellerId,
+        sellerName: sellerUser.name,
+        companyName: (sellerUser as any).company?.name,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Lead successfully forwarded to ${sellerUser.name}!`,
+      data: JSON.parse(JSON.stringify(enquiry)),
+    };
+  } catch (error) {
+    console.error("Assign enquiry error:", error);
+    return { success: false, error: "Failed to assign and forward enquiry." };
   }
 }

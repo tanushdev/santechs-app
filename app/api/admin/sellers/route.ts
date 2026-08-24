@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connection";
 import User from "@/lib/db/models/User.model";
 import Company from "@/lib/db/models/Company.model"; // Ensure model is registered
+import Product from "@/lib/db/models/Product.model";
 import { auth } from "@/lib/auth/config";
 import { UserRole, UserStatus } from "@/types";
 
@@ -31,17 +32,32 @@ export async function GET(req: NextRequest) {
         { status: UserStatus.PENDING },
         { company: { $in: pendingCompanyIds } }
       ];
-    } else {
+    } else if (status !== "ALL") {
       filter.status = status as UserStatus;
     }
 
-    // Load sellers with filter, populate company
+    // Load sellers with filter, populate company and attach submitted products
     const sellers = await User.find(filter)
       .populate("company")
       .sort({ createdAt: -1 })
       .lean();
 
-    return NextResponse.json({ success: true, data: sellers });
+    const sellerIds = sellers.map((s) => s._id);
+    const products = await Product.find({ seller: { $in: sellerIds } })
+      .select("name slug referenceNumber images status price location yearOfManufacture modelNumber category subCategory seller")
+      .populate({ path: "category", select: "name slug type", strictPopulate: false })
+      .populate({ path: "subCategory", select: "name slug", strictPopulate: false })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const sellersWithProducts = sellers.map((s) => ({
+      ...s,
+      products: products.filter(
+        (p: any) => p.seller?.toString() === s._id.toString()
+      ),
+    }));
+
+    return NextResponse.json({ success: true, data: sellersWithProducts });
   } catch (error) {
     console.error("GET sellers error:", error);
     return NextResponse.json(

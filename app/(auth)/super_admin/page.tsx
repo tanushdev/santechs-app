@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, signOut, getSession } from "next-auth/react";
+import { signIn, signOut, getSession, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Factory, Loader2, Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
+import { Factory, Loader2, Eye, EyeOff, LogIn, Mail, Lock, UserCheck, RefreshCw } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -19,13 +19,24 @@ import { loginSchema, type LoginFormValues } from "@/lib/validations";
 
 function SuperAdminLoginForm() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  const handleSignOutCurrent = async () => {
+    await signOut({ redirect: false });
+    window.location.reload();
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -33,7 +44,12 @@ function SuperAdminLoginForm() {
       setError("This login portal is reserved for administrators only.");
       return;
     }
-    
+
+    // Purge active non-admin session cookie before logging in as Super Admin
+    if (session && session.user?.role !== "SUPER_ADMIN" && session.user?.role !== "ADMIN") {
+      await signOut({ redirect: false });
+    }
+
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
@@ -48,21 +64,21 @@ function SuperAdminLoginForm() {
         setError(result.error);
       }
     } else {
-      const session = await getSession();
-      const role = session?.user?.role;
+      const newSession = await getSession();
+      const role = newSession?.user?.role;
 
       if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
         setError("This login portal is reserved for administrators only.");
-        await signOut({ redirect: false });
         return;
       }
 
-      window.location.href = "/admin/dashboard";
+      await fetch("/api/auth/role-session", { method: "POST" });
+      window.location.href = "/admin/sellers";
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-between items-center relative overflow-hidden bg-sky-100 py-10 px-4">
+    <div suppressHydrationWarning className="min-h-screen w-full flex flex-col justify-between items-center relative overflow-hidden bg-sky-100 py-10 px-4">
       
       {/* ── BACKGROUND IMAGE & LAYERS ───────────────────────── */}
       <div className="absolute inset-0 z-0">
@@ -98,7 +114,7 @@ function SuperAdminLoginForm() {
       </div>
 
       {/* ── CENTRAL GLASSMORPHIC LOGIN CARD ──────────────────── */}
-      <div className="w-full max-w-[420px] bg-white/60 border border-white/40 backdrop-blur-md rounded-[32px] p-8 sm:p-10 shadow-[0_16px_50px_rgba(0,0,0,0.06)] relative z-10 space-y-6">
+      <div suppressHydrationWarning className="w-full max-w-[420px] bg-white/60 border border-white/40 backdrop-blur-md rounded-[32px] p-8 sm:p-10 shadow-[0_16px_50px_rgba(0,0,0,0.06)] relative z-10 space-y-6">
         
         {/* Floating icon box */}
         <div className="w-12 h-12 rounded-2xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex items-center justify-center text-slate-800 mx-auto">
@@ -115,6 +131,30 @@ function SuperAdminLoginForm() {
           </p>
         </div>
 
+        {/* Active Non-Admin Session Notice */}
+        {mounted && session?.user && session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN" && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-amber-600" /> Currently Logged In:
+              </span>
+              <span className="text-[10px] font-bold uppercase bg-amber-200/60 px-2 py-0.5 rounded text-amber-900 font-mono">
+                {session.user.role}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-normal">
+              Account: <strong>{session.user.email}</strong>. Logging in below will switch your session to Super Admin.
+            </p>
+            <button
+              type="button"
+              onClick={handleSignOutCurrent}
+              className="text-[11px] font-bold text-amber-800 hover:text-amber-950 underline flex items-center gap-1 cursor-pointer pt-0.5"
+            >
+              <RefreshCw className="w-3 h-3" /> Log Out Current Account First
+            </button>
+          </div>
+        )}
+
         {/* Error Notification */}
         {error && (
           <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs font-semibold text-center leading-normal">
@@ -130,7 +170,7 @@ function SuperAdminLoginForm() {
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
+                <FormItem id="super-admin-email-field">
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -152,7 +192,7 @@ function SuperAdminLoginForm() {
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem>
+                <FormItem id="super-admin-password-field">
                   <FormControl>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

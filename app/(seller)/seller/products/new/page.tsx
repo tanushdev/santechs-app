@@ -14,7 +14,7 @@ export default async function NewProductPage() {
   await connectToDatabase();
 
   const categories = await Category.find({ isActive: true })
-    .select("name type")
+    .select("name type parent")
     .sort({ name: 1 })
     .lean();
 
@@ -23,6 +23,7 @@ export default async function NewProductPage() {
     _id: cat._id.toString(),
     name: cat.name,
     type: cat.type,
+    parent: cat.parent ? cat.parent.toString() : null,
   }));
 
   return (

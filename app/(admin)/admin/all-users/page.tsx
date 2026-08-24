@@ -26,6 +26,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,14 +178,23 @@ export default function AdminAllUsersPage() {
             Directory of all registered buyers, sellers, and admin accounts. Click any user to inspect their profile and added items.
           </p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email..."
-            className="pl-9"
-          />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, or role..."
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => { window.location.href = "/api/admin/users/export"; }}
+            className="h-10 text-xs font-semibold border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <Download className="w-3.5 h-3.5" /> Export Users CSV
+          </Button>
         </div>
       </div>
 

@@ -24,20 +24,23 @@ import {
   Wrench,
   Sparkles,
 } from "lucide-react";
+import { CONTINENTS } from "@/lib/utils/continent";
 import Image from "next/image";
 
 interface Category {
   _id: string;
   name: string;
   type: string;
+  parent?: any;
 }
 
 interface ProductFormProps {
   categories: Category[];
+  brands?: { _id: string; name: string }[];
   initialData?: any; // If provided, we are in edit mode
 }
 
-export default function ProductForm({ categories, initialData }: ProductFormProps) {
+export default function ProductForm({ categories, brands = [], initialData }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +52,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -57,6 +61,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
           name: initialData.name,
           description: initialData.description,
           category: initialData.category?._id || initialData.category,
+          subCategory: initialData.subCategory?._id || initialData.subCategory || "",
           brand: initialData.brand?._id || initialData.brand || "",
           condition: initialData.condition,
           machineType: initialData.machineType || "",
@@ -75,6 +80,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
             city: initialData.location?.city || "",
             state: initialData.location?.state || "",
             country: initialData.location?.country || "",
+            continent: initialData.location?.continent || "",
             pincode: initialData.location?.pincode || "",
           },
           images: initialData.images || [],
@@ -95,6 +101,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
           name: "",
           description: "",
           category: "",
+          subCategory: "",
           brand: "",
           condition: ProductCondition.USED,
           machineType: "",
@@ -105,7 +112,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
           numberOfPositions: undefined,
           numberOfSpindles: undefined,
           price: undefined,
-          currency: "INR",
+          currency: "USD",
           quantity: 1,
           images: [],
           videos: [],
@@ -124,10 +131,18 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
             city: "",
             state: "",
             country: "",
+            continent: "",
             pincode: "",
           },
         },
   });
+
+  const selectedCategory = watch("category");
+  const subCategories = categories.filter((c) => {
+    const parentId = typeof c.parent === "object" ? c.parent?._id : c.parent;
+    return parentId && String(parentId) === String(selectedCategory);
+  });
+  const rootCategories = categories.filter((c) => !c.parent);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -238,7 +253,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                 className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="">Select a category</option>
-                {categories.map((cat) => (
+                {(rootCategories.length > 0 ? rootCategories : categories).map((cat) => (
                   <option key={cat._id} value={cat._id}>
                     {cat.name} ({cat.type})
                   </option>
@@ -247,6 +262,25 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
               {errors.category && (
                 <p className="text-xs text-destructive mt-1 font-medium">{errors.category.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="subCategory">Sub-Category</Label>
+              <select
+                id="subCategory"
+                {...register("subCategory")}
+                disabled={subCategories.length === 0}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
+              >
+                <option value="">
+                  {subCategories.length > 0 ? "Select a sub-category (Optional)" : "Select Category first"}
+                </option>
+                {subCategories.map((sub) => (
+                  <option key={sub._id} value={sub._id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -504,6 +538,22 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
               {errors.location?.country && (
                 <p className="text-xs text-destructive mt-1 font-medium">{errors.location.country.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location.continent">Continent</Label>
+              <select
+                id="location.continent"
+                {...register("location.continent")}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="">Auto-detect from country or select</option>
+                {CONTINENTS.map((cont) => (
+                  <option key={cont} value={cont}>
+                    {cont}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">

@@ -70,13 +70,15 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue
 )
 
-function FormItem({ className, ...props }: React.ComponentProps<"div">) {
-  const id = React.useId()
+function FormItem({ id: propId, className, ...props }: React.ComponentProps<"div">) {
+  const generatedId = React.useId()
+  const id = propId || generatedId
   return (
     <FormItemContext.Provider value={{ id }}>
       <div
         data-slot="form-item"
         className={cn("grid gap-2", className)}
+        suppressHydrationWarning
         {...props}
       />
     </FormItemContext.Provider>
@@ -94,12 +96,13 @@ function FormLabel({
       data-error={!!error}
       className={cn("data-[error=true]:text-destructive", className)}
       htmlFor={formItemId}
+      suppressHydrationWarning
       {...props}
     />
   )
 }
 
-function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+function FormControl({ children, ...props }: React.ComponentProps<typeof Slot>) {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
   return (
     <Slot
@@ -111,8 +114,15 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
           : `${formDescriptionId} ${formMessageId}`
       }
       aria-invalid={!!error}
+      suppressHydrationWarning
       {...props}
-    />
+    >
+      {React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement<any>, {
+            suppressHydrationWarning: true,
+          })
+        : children}
+    </Slot>
   )
 }
 

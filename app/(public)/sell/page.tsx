@@ -82,7 +82,7 @@ export default function SellLandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
-              <Link href="/seller/register">
+              <Link href="/register?role=seller">
                 <Button className="bg-black text-white hover:bg-neutral-800 rounded-full px-8 h-12 font-medium text-xs tracking-wider uppercase transition-colors group">
                   Start Selling Free
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -195,7 +195,7 @@ export default function SellLandingPage() {
             </div>
             
             <div className="relative z-10 shrink-0 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <Link href="/seller/register" className="w-full sm:w-auto">
+              <Link href="/register?role=seller" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-slate-100 font-semibold px-8 h-11 text-xs uppercase tracking-wider">
                   Get Started (Free)
                 </Button>

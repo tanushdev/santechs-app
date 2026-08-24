@@ -9,6 +9,8 @@ import { productSchema } from "@/lib/validations";
 import { NotificationType, ProductStatus, UserRole } from "@/types";
 import User from "@/lib/db/models/User.model";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { getContinentFromCountry } from "@/lib/utils/continent";
+import { invalidateCategoryCache } from "@/lib/cache/category-cache";
 
 function generateRef(): string {
   return `SAN-${Date.now().toString(36).toUpperCase()}-${Math.random()
@@ -32,19 +34,40 @@ function toSlug(name: string, ref: string): string {
 export async function createProduct(data: unknown) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== UserRole.SELLER) {
+    if (
+      !session ||
+      ![UserRole.SELLER, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(
+        session.user.role
+      )
+    ) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const parsed = productSchema.safeParse(data);
+    const rawData = (data ?? {}) as Record<string, any>;
+    const parsed = productSchema.safeParse(rawData);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid data",
+      };
     }
 
     await connectToDatabase();
 
-    const user = await User.findById(session.user.id).populate("company");
-    if (!user?.company) {
+    const isAdmin = [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(
+      session.user.role
+    );
+    let targetSellerId = session.user.id;
+    let targetCompanyId: any = null;
+
+    if (isAdmin && rawData.sellerId) {
+      targetSellerId = rawData.sellerId;
+    }
+
+    const targetUser = await User.findById(targetSellerId).populate("company");
+    if (targetUser?.company) {
+      targetCompanyId = targetUser.company._id ?? targetUser.company;
+    } else if (!isAdmin && !targetUser?.company) {
       return {
         success: false,
         error: "Please complete your company profile first",
@@ -52,7 +75,7 @@ export async function createProduct(data: unknown) {
     }
 
     const ref = generateRef();
-    const productData = parsed.data as Record<string, unknown>;
+    const productData = parsed.data as Record<string, any>;
     if (productData.model) {
       productData.machineModel = productData.model;
       delete productData.model;
@@ -60,31 +83,45 @@ export async function createProduct(data: unknown) {
     if (productData.brand === "") {
       delete productData.brand;
     }
+    if (productData.subCategory === "") {
+      delete productData.subCategory;
+    }
+
+    if (productData.location?.country && !productData.location.continent) {
+      const derived = getContinentFromCountry(productData.location.country);
+      if (derived) productData.location.continent = derived;
+    }
+
+    const initialStatus = isAdmin
+      ? (rawData.status as ProductStatus) || ProductStatus.APPROVED
+      : ProductStatus.PENDING;
 
     const product = await Product.create({
       ...productData,
       referenceNumber: ref,
       slug: toSlug(parsed.data.name, ref),
-      seller: session.user.id,
-      company: user.company._id ?? user.company,
-      status: ProductStatus.PENDING,
+      seller: targetSellerId,
+      company: targetCompanyId,
+      status: initialStatus,
     });
 
-    // Notify all admins
-    const admins = await User.find({
-      role: { $in: [UserRole.ADMIN, UserRole.SUPER_ADMIN] },
-    });
+    // Notify all admins if created by a seller
+    if (!isAdmin) {
+      const admins = await User.find({
+        role: { $in: [UserRole.ADMIN, UserRole.SUPER_ADMIN] },
+      });
 
-    await Notification.insertMany(
-      admins.map((admin) => ({
-        recipient: admin._id,
-        type: NotificationType.PRODUCT_SUBMITTED,
-        title: "New Product Pending Review",
-        message: `"${parsed.data.name}" submitted by ${user.name}`,
-        link: `/admin/products/${product._id}`,
-        data: { productId: product._id },
-      }))
-    );
+      await Notification.insertMany(
+        admins.map((admin) => ({
+          recipient: admin._id,
+          type: NotificationType.PRODUCT_SUBMITTED,
+          title: "New Product Pending Review",
+          message: `"${parsed.data.name}" submitted by ${targetUser?.name ?? "Seller"}`,
+          link: `/admin/products/${product._id}`,
+          data: { productId: product._id },
+        }))
+      );
+    }
 
     // Log activity
     await ActivityLog.create({
@@ -94,9 +131,11 @@ export async function createProduct(data: unknown) {
       resourceId: product._id.toString(),
     });
 
+    invalidateCategoryCache();
+
     return {
       success: true,
-      message: "Product submitted for review!",
+      message: isAdmin ? "Product created successfully!" : "Product submitted for review!",
       productId: product._id.toString(),
     };
   } catch (error) {
@@ -110,9 +149,13 @@ export async function updateProduct(productId: string, data: unknown) {
     const session = await auth();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const parsed = productSchema.partial().safeParse(data);
+    const rawData = (data ?? {}) as Record<string, any>;
+    const parsed = productSchema.partial().safeParse(rawData);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid data",
+      };
     }
 
     await connectToDatabase();
@@ -120,16 +163,16 @@ export async function updateProduct(productId: string, data: unknown) {
     const product = await Product.findById(productId);
     if (!product) return { success: false, error: "Product not found" };
 
+    const isAdmin = [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(
+      session.user.role
+    );
+
     // Seller can only edit their own products
-    if (
-      session.user.role === UserRole.SELLER &&
-      product.seller.toString() !== session.user.id
-    ) {
+    if (!isAdmin && product.seller.toString() !== session.user.id) {
       return { success: false, error: "Unauthorized" };
     }
 
-    // If seller edits an approved product, resubmit for review
-    const updateData = parsed.data as Record<string, unknown>;
+    const updateData = parsed.data as Record<string, any>;
     if (updateData.model) {
       updateData.machineModel = updateData.model;
       delete updateData.model;
@@ -137,10 +180,29 @@ export async function updateProduct(productId: string, data: unknown) {
     if (updateData.brand === "") {
       delete updateData.brand;
     }
-    if (
-      session.user.role === UserRole.SELLER &&
-      product.status === ProductStatus.APPROVED
-    ) {
+    if (updateData.subCategory === "") {
+      delete updateData.subCategory;
+    }
+
+    if (updateData.location?.country && !updateData.location.continent) {
+      const derived = getContinentFromCountry(updateData.location.country);
+      if (derived) updateData.location.continent = derived;
+    }
+
+    // Admin can update seller/company assignment if sellerId is provided
+    if (isAdmin && rawData.sellerId) {
+      const newSeller = await User.findById(rawData.sellerId).populate("company");
+      if (newSeller) {
+        updateData.seller = newSeller._id;
+        updateData.company = newSeller.company?._id ?? newSeller.company ?? null;
+      }
+    }
+
+    // Admin can update status directly
+    if (isAdmin && rawData.status) {
+      updateData.status = rawData.status;
+    } else if (!isAdmin && product.status === ProductStatus.APPROVED) {
+      // If seller edits an approved product, resubmit for review
       updateData.status = ProductStatus.PENDING;
     }
 
@@ -152,6 +214,8 @@ export async function updateProduct(productId: string, data: unknown) {
       resource: "Product",
       resourceId: productId,
     });
+
+    invalidateCategoryCache();
 
     return { success: true, message: "Product updated successfully!" };
   } catch (error) {
@@ -207,6 +271,8 @@ export async function approveProduct(productId: string) {
       resource: "Product",
       resourceId: productId,
     });
+
+    invalidateCategoryCache();
 
     return { success: true, message: "Product approved and published!" };
   } catch (error) {
@@ -334,6 +400,8 @@ export async function deleteProduct(productId: string) {
       resource: "Product",
       resourceId: productId,
     });
+
+    invalidateCategoryCache();
 
     return { success: true, message: "Product deleted successfully!" };
   } catch (error) {

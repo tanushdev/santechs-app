@@ -2,23 +2,16 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   MessageSquare, Search, Phone, Mail, User, Building2, Globe, Clock,
   ShieldCheck, ArrowRight, ShieldAlert, Lock, Unlock, Package, Calendar,
-  Trash2, ChevronLeft, ChevronRight
+  Trash2, ChevronLeft, ChevronRight, Send, CheckCircle2, Layers, AlertCircle, Share2, Sparkles, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 
 const statuses = [
   "ALL", "NEW", "CONTACTED_BUYER", "SELLER_ASSIGNED", "NEGOTIATION",
@@ -38,23 +31,16 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminEnquiriesPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [search, setSearch] = useState("");
-  const [manageModalOpen, setManageModalOpen] = useState(false);
-  const [selectedEnquiry, setSelectedEnquiry] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const PAGE_SIZE = 10;
-  
-  // Modal Edit States
-  const [newStatus, setNewStatus] = useState("");
-  const [adminNotes, setAdminNotes] = useState("");
-  const [buyerContactShared, setBuyerContactShared] = useState(false);
-  const [sellerContactShared, setSellerContactShared] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
-  const { data: enquiryData, isLoading, refetch } = useQuery({
+  // Fetch enquiries
+  const { data: enquiryData, isLoading } = useQuery({
     queryKey: ["admin", "enquiries", selectedStatus, currentPage],
     queryFn: async () => {
       const base = selectedStatus === "ALL" ? "/api/admin/enquiries" : `/api/admin/enquiries?status=${selectedStatus}`;
@@ -83,37 +69,15 @@ export default function AdminEnquiriesPage() {
     }
   };
 
-  const handleUpdate = async () => {
-    if (!selectedEnquiry || !newStatus) return;
-    setIsUpdating(true);
-    try {
-      const res = await fetch(`/api/admin/enquiries/${selectedEnquiry._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: newStatus,
-          adminNotes,
-          buyerContactShared,
-          sellerContactShared
-        }),
-      });
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["admin", "enquiries"] });
-        setManageModalOpen(false);
-        setSelectedEnquiry(null);
-      }
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const filtered = enquiries.filter((e: any) => {
     const name = String(e.buyerName ?? "").toLowerCase();
     const company = String(e.buyerCompany ?? "").toLowerCase();
     const ref = String(e.referenceNumber ?? "").toLowerCase();
     const product = String(e.product?.name ?? "").toLowerCase();
+    const originalSellerName = String(e.originalSeller?.company?.name || e.originalSeller?.name || "").toLowerCase();
+    const assignedSellerName = String(e.assignedSeller?.company?.name || e.assignedSeller?.name || "").toLowerCase();
     const q = search.toLowerCase();
-    return name.includes(q) || company.includes(q) || ref.includes(q) || product.includes(q);
+    return name.includes(q) || company.includes(q) || ref.includes(q) || product.includes(q) || originalSellerName.includes(q) || assignedSellerName.includes(q);
   });
 
   const handleStatusFilterChange = (st: string) => {
@@ -134,7 +98,7 @@ export default function AdminEnquiriesPage() {
             Enquiry & Deal Pipeline
           </h1>
           <p className="text-slate-500 text-xs mt-1">
-            🔒 Super Admin Control — Verify buyer credentials and coordinate contact access.
+            🔒 Super Admin Intermediary Control — Buyer requests are routed privately. Choose which seller receives each lead.
           </p>
         </div>
         <div className="relative w-full sm:w-72">
@@ -142,7 +106,7 @@ export default function AdminEnquiriesPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reference, buyer, product..."
+            placeholder="Search reference, buyer, seller..."
             className="pl-9 rounded-full bg-slate-50 border-slate-200 focus-visible:ring-black"
           />
         </div>
@@ -184,6 +148,11 @@ export default function AdminEnquiriesPage() {
         <div className="space-y-4">
           {filtered.map((enquiry: any) => {
             const statusStyle = statusColor[enquiry.status] || "bg-slate-100 text-slate-700 border-slate-200";
+            const originalSeller = enquiry.originalSeller || enquiry.seller;
+            const assignedSeller = enquiry.assignedSeller;
+            const isForwarded = enquiry.isForwardedToSeller;
+            const product = enquiry.product;
+
             return (
               <div
                 key={enquiry._id.toString()}
@@ -198,6 +167,15 @@ export default function AdminEnquiriesPage() {
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusStyle}`}>
                       {enquiry.status.replace(/_/g, " ")}
                     </span>
+                    {isForwarded ? (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Forwarded to Seller
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 text-amber-600" /> Admin Review Only (Seller Not Alerted)
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
@@ -223,29 +201,35 @@ export default function AdminEnquiriesPage() {
                 {/* Info layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
                   
-                  {/* Left Column: Product & Requirements */}
+                  {/* Left Column: Product, Lead Routing & Buyer Details */}
                   <div className="space-y-4">
-                    {enquiry.product && (
-                      <div className="flex items-center gap-3 bg-[#eeece7]/30 p-3 rounded-xl border border-[#e5e7eb]">
+                    {product && (
+                      <div className="flex items-center gap-3 bg-[#eeece7]/30 p-3.5 rounded-xl border border-[#e5e7eb]">
                         <Package className="w-5 h-5 text-black flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Target Listing</p>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Target Listing</span>
+                            {product.subCategory?.name && (
+                              <Badge variant="outline" className="text-[9px] font-bold bg-white text-orange-600 border-orange-200 py-0 px-1.5">
+                                {product.subCategory.name}
+                              </Badge>
+                            )}
+                            {product.category?.name && (
+                              <Badge variant="outline" className="text-[9px] font-bold bg-white text-slate-600 border-slate-200 py-0 px-1.5">
+                                {product.category.name}
+                              </Badge>
+                            )}
+                          </div>
                           <span className="text-sm font-bold text-black truncate block">
-                            {enquiry.product.name}
+                            {product.name}
                           </span>
                         </div>
-                        {enquiry.product.price && (
-                          <div className="text-right text-xs font-mono font-bold text-slate-900">
-                            {enquiry.product.currency === "INR" ? "₹" : enquiry.product.currency}{" "}
-                            {enquiry.product.price.toLocaleString("en-IN")}
-                          </div>
-                        )}
                       </div>
                     )}
 
                     <div className="space-y-1">
                       <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#75758a]">
-                        Requirement Summary
+                        Buyer Requirement Notes
                       </p>
                       <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 leading-relaxed whitespace-pre-line">
                         {enquiry.requirement || "No detailed requirement notes provided."}
@@ -264,12 +248,12 @@ export default function AdminEnquiriesPage() {
                       )}
                     </div>
 
-                    {/* Deal Participants Section */}
+                    {/* Deal Participants & Seller Routing Row */}
                     <div className="border-t border-slate-100 pt-4 mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Buyer Details */}
-                      <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100/80 space-y-1.5">
+                      <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100/80 space-y-1.5">
                         <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
-                          <User className="w-3.5 h-3.5 text-primary" /> Buyer
+                          <User className="w-3.5 h-3.5 text-primary" /> Buyer Credentials
                         </div>
                         <div className="text-xs space-y-1 text-slate-700">
                           <p className="font-bold text-black">{enquiry.buyerName}</p>
@@ -281,55 +265,69 @@ export default function AdminEnquiriesPage() {
                         </div>
                       </div>
 
-                      {/* Seller Details */}
-                      <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100/80 space-y-1.5">
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
-                          <Building2 className="w-3.5 h-3.5 text-primary" /> Seller
+                      {/* Seller Lead Assignment Details */}
+                      <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100/80 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-[#ff7759]" /> Assigned Seller
+                          </span>
+                          {isForwarded ? (
+                            <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] py-0 font-semibold">
+                              Lead Sent
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] py-0 font-semibold">
+                              Pending Routing
+                            </Badge>
+                          )}
                         </div>
+
                         <div className="text-xs space-y-1 text-slate-700">
-                          <p className="font-bold text-black">{enquiry.seller?.name || "Seller Owner"}</p>
-                          <p className="text-slate-500">{enquiry.seller?.company?.name || "No Company Profile"}</p>
-                          <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-100">
-                            <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {enquiry.seller?.email || "N/A"}</span>
-                            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {enquiry.seller?.phone || enquiry.seller?.company?.phone || "N/A"}</span>
-                          </div>
+                          <p className="font-bold text-black">
+                            {assignedSeller?.company?.name || assignedSeller?.name || originalSeller?.company?.name || originalSeller?.name || "No Seller Assigned"}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {originalSeller?._id === assignedSeller?._id || !assignedSeller
+                              ? "(Original Product Lister)"
+                              : `(Re-routed by Admin • Original: ${originalSeller?.company?.name || originalSeller?.name || "N/A"})`}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column: Mini Contact Summary Card */}
+                  {/* Right Column: Control & Routing Summary Card */}
                   <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 flex flex-col justify-between gap-4">
                     <div className="space-y-3">
                       <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#75758a]">
-                        Contact Sharing Status
+                        Lead Intermediary Status
                       </p>
+
                       <div className="space-y-2">
-                        
+                        {/* Lead Forwarding Indicator */}
+                        <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">Seller Alert Status</span>
+                          {isForwarded ? (
+                            <p className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Forwarded to Storefront
+                            </p>
+                          ) : (
+                            <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5" /> Private to Super Admin
+                            </p>
+                          )}
+                        </div>
+
                         {/* Buyer access indicator */}
-                        <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-white border border-slate-200">
-                          <span className="text-slate-600 font-medium">Buyer Details</span>
+                        <div className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-white border border-slate-200">
+                          <span className="text-slate-600 font-medium">Buyer Phone/Email</span>
                           {enquiry.buyerContactShared ? (
                             <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-bold text-[10px] flex items-center gap-1">
                               <Unlock className="w-3 h-3" /> Shared
                             </span>
                           ) : (
                             <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 font-bold text-[10px] flex items-center gap-1">
-                              <Lock className="w-3 h-3 text-slate-400" /> Locked
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Seller access indicator */}
-                        <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-white border border-slate-200">
-                          <span className="text-slate-600 font-medium">Seller Details</span>
-                          {enquiry.sellerContactShared ? (
-                            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-bold text-[10px] flex items-center gap-1">
-                              <Unlock className="w-3 h-3" /> Shared
-                            </span>
-                          ) : (
-                            <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 font-bold text-[10px] flex items-center gap-1">
-                              <Lock className="w-3 h-3 text-slate-400" /> Locked
+                              <Lock className="w-3 h-3 text-slate-400" /> Hidden
                             </span>
                           )}
                         </div>
@@ -338,17 +336,10 @@ export default function AdminEnquiriesPage() {
 
                     <Button
                       size="sm"
-                      className="w-full bg-black text-white hover:bg-neutral-800 rounded-full text-xs font-bold uppercase tracking-wider h-10"
-                      onClick={() => {
-                        setSelectedEnquiry(enquiry);
-                        setNewStatus(enquiry.status);
-                        setAdminNotes(enquiry.adminNotes ?? "");
-                        setBuyerContactShared(enquiry.buyerContactShared ?? false);
-                        setSellerContactShared(enquiry.sellerContactShared ?? false);
-                        setManageModalOpen(true);
-                      }}
+                      className="w-full bg-black text-white hover:bg-neutral-800 rounded-full text-xs font-bold uppercase tracking-wider h-10 cursor-pointer"
+                      onClick={() => router.push(`/admin/enquiries/${enquiry._id}`)}
                     >
-                      Review & Manage Deal
+                      Route Lead & Manage Deal
                     </Button>
                   </div>
 
@@ -411,154 +402,6 @@ export default function AdminEnquiriesPage() {
           </div>
         </div>
       )}
-
-      {/* Expanded Review & Manage Deal Modal */}
-      <Dialog open={manageModalOpen} onOpenChange={setManageModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0">
-          
-          <DialogHeader className="p-6 pb-4 border-b border-[#e5e7eb] shrink-0">
-            <DialogTitle className="text-xl font-bold font-heading">
-              Enquiry Review & Santechs Control
-            </DialogTitle>
-            <DialogDescription className="font-mono text-xs">
-              Deals Manager Room · Ref #{selectedEnquiry?.referenceNumber}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Scrollable Layout Grid */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-            
-            {/* Split Section: Deal State vs. Contact Information */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              
-              {/* Column 1: Deal State, Notes & Target listing (7 Cols) */}
-              <div className="md:col-span-6 space-y-5">
-                
-                {/* Product target card */}
-                {selectedEnquiry?.product && (
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Target Listing</span>
-                    <div className="flex items-center gap-3">
-                      <Package className="w-5 h-5 text-black flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-slate-900 block truncate">{selectedEnquiry.product.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">Ref: {selectedEnquiry.product.referenceNumber}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Status Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Deal Status Stage</label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full h-11 text-sm border border-slate-200 rounded-xl px-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/5"
-                  >
-                    {statuses.filter((s) => s !== "ALL").map((st) => (
-                      <option key={st} value={st}>{st.replace(/_/g, " ")}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Admin Notes */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Internal Santechs Notes</label>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Log calls, verify buyer specifications, note negotiation updates..."
-                    className="min-h-[140px] text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-black/5 rounded-xl border-slate-200"
-                  />
-                </div>
-
-              </div>
-
-              {/* Column 2: Dual Contact Verification & Toggles (5 Cols) */}
-              <div className="md:col-span-6 space-y-5">
-                
-                {/* Buyer Details Box */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-slate-500" /> Buyer Profile
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 text-xs text-slate-700 leading-relaxed font-sans">
-                    <p><strong>Name:</strong> {selectedEnquiry?.buyerName}</p>
-                    <p><strong>Company:</strong> {selectedEnquiry?.buyerCompany}</p>
-                    <p><strong>Country:</strong> {selectedEnquiry?.buyerCountry}</p>
-                    <p><strong>Email:</strong> {selectedEnquiry?.buyerEmail}</p>
-                    <p><strong>Phone:</strong> {selectedEnquiry?.buyerPhone}</p>
-                  </div>
-
-                  {/* Share Contact Toggle */}
-                  <label className="flex items-center gap-2.5 pt-2 border-t border-slate-200/60 mt-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={buyerContactShared}
-                      onChange={(e) => setBuyerContactShared(e.target.checked)}
-                      className="w-4 h-4 rounded text-black border-slate-300 focus:ring-black accent-black cursor-pointer"
-                    />
-                    <div className="text-xs select-none">
-                      <p className="font-bold text-slate-900">Share Buyer Contact</p>
-                      <p className="text-[10px] text-slate-500">Allows the Seller to contact buyer directly</p>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Seller Details Box */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-slate-500" /> Seller Profile
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 text-xs text-slate-700 leading-relaxed font-sans">
-                    <p><strong>Owner Name:</strong> {selectedEnquiry?.seller?.name || "Seller Owner"}</p>
-                    <p><strong>Company:</strong> {selectedEnquiry?.seller?.company?.name || "N/A"}</p>
-                    <p><strong>Email:</strong> {selectedEnquiry?.seller?.email || "N/A"}</p>
-                    <p><strong>Phone:</strong> {selectedEnquiry?.seller?.phone || selectedEnquiry?.seller?.company?.phone || "N/A"}</p>
-                  </div>
-
-                  {/* Share Contact Toggle */}
-                  <label className="flex items-center gap-2.5 pt-2 border-t border-slate-200/60 mt-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={sellerContactShared}
-                      onChange={(e) => setSellerContactShared(e.target.checked)}
-                      className="w-4 h-4 rounded text-black border-slate-300 focus:ring-black accent-black cursor-pointer"
-                    />
-                    <div className="text-xs select-none">
-                      <p className="font-bold text-slate-900">Share Seller Contact</p>
-                      <p className="text-[10px] text-slate-500">Allows the Buyer to contact seller directly</p>
-                    </div>
-                  </label>
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Action buttons */}
-          <div className="p-4 border-t border-[#e5e7eb] flex justify-end gap-2 bg-slate-50 rounded-b-2xl shrink-0">
-            <Button variant="outline" onClick={() => setManageModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-black text-white hover:bg-neutral-800 rounded-full px-6 text-xs uppercase tracking-wider font-semibold"
-              disabled={isUpdating}
-              onClick={handleUpdate}
-            >
-              {isUpdating ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-
-        </DialogContent>
-      </Dialog>
 
     </div>
   );

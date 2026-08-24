@@ -22,7 +22,7 @@ export default async function EditProductPage({
 
   const [product, categories] = await Promise.all([
     Product.findById(id).lean(),
-    Category.find({ isActive: true }).select("name type").sort({ name: 1 }).lean(),
+    Category.find({ isActive: true }).select("name type parent").sort({ name: 1 }).lean(),
   ]);
 
   if (!product) {
@@ -40,6 +40,7 @@ export default async function EditProductPage({
     _id: cat._id.toString(),
     name: cat.name,
     type: cat.type,
+    parent: cat.parent ? cat.parent.toString() : null,
   }));
 
   return (

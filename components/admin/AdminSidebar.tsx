@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -17,7 +18,6 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ export function AdminSidebarNavContent({
   const [platformOpen, setPlatformOpen] = useState(true);
 
   return (
-    <div className="flex flex-col h-full bg-sidebar">
+    <div suppressHydrationWarning className="flex flex-col h-full bg-sidebar">
       {/* Header with Logo + Close Button */}
       <div className="flex items-center justify-between h-16 px-5 border-b border-sidebar-border shrink-0">
         <Link
@@ -133,16 +133,8 @@ export function AdminSidebarNavContent({
               <SidebarLink
                 href="/admin/sellers"
                 icon={UserCheck}
-                label="Pending Sellers"
-                badge={pendingSellers}
-                isSubmenu={true}
-                onLinkClick={() => { onLinkClick?.(); onClose?.(); }}
-              />
-              <SidebarLink
-                href="/admin/products"
-                icon={Package}
-                label="Pending Products"
-                badge={pendingProducts}
+                label="Pending Approvals"
+                badge={pendingSellers + pendingProducts}
                 isSubmenu={true}
                 onLinkClick={() => { onLinkClick?.(); onClose?.(); }}
               />
@@ -172,7 +164,7 @@ export function AdminSidebarNavContent({
               <SidebarLink
                 href="/admin/enquiries"
                 icon={MessageSquare}
-                label="Enquiries"
+                label="Enquiries & Deals"
                 badge={newEnquiries}
                 isSubmenu={true}
                 onLinkClick={() => { onLinkClick?.(); onClose?.(); }}
@@ -196,7 +188,7 @@ export function AdminSidebarNavContent({
               <SidebarLink
                 href="/admin/all-users"
                 icon={Users}
-                label="All Users"
+                label="Users Directory"
                 isSubmenu={true}
                 onLinkClick={() => { onLinkClick?.(); onClose?.(); }}
               />
@@ -246,6 +238,21 @@ export function AdminSidebarNavContent({
 }
 
 export default function AdminSidebar(props: AdminSidebarProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <aside
+        suppressHydrationWarning
+        className="hidden lg:block fixed left-0 top-0 h-screen w-64 z-40 bg-sidebar border-r border-sidebar-border"
+      />
+    );
+  }
+
   return (
     <aside
       suppressHydrationWarning

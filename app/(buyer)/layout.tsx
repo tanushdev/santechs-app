@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/config";
+import { getRoleSession } from "@/lib/auth/roleAuth";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/types";
 import Navbar from "@/components/layout/Navbar";
@@ -9,15 +9,15 @@ export default async function BuyerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const buyerSession = await getRoleSession([UserRole.BUYER]);
 
-  if (!session || session.user.role !== UserRole.BUYER) {
+  if (!buyerSession || buyerSession.user.role !== UserRole.BUYER) {
     redirect("/login");
   }
 
   return (
     <>
-      <Navbar />
+      <Navbar initialSession={buyerSession} portal="buyer" />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {children}
       </main>
