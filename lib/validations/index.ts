@@ -67,12 +67,6 @@ export const companySchema = z.object({
     .min(1800)
     .max(new Date().getFullYear())
     .optional(),
-  employeeCount: z
-    .enum(["1-10", "11-50", "51-200", "201-500", "500+"])
-    .optional(),
-  turnover: z
-    .enum(["Under 1Cr", "1-5Cr", "5-25Cr", "25-100Cr", "100Cr+"])
-    .optional(),
   address: z.object({
     street: z.string().optional(),
     city: z.string().min(1, "City is required"),

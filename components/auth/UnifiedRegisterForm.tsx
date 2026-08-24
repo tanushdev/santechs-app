@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -40,9 +40,7 @@ export function UnifiedRegisterForm({
 }: UnifiedRegisterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryRole = searchParams.get("role")?.toUpperCase();
-  const effectiveRole = queryRole === "SELLER" || queryRole === "BUYER" ? queryRole : initialRole;
-  const [selectedRole, setSelectedRole] = useState<"BUYER" | "SELLER">(effectiveRole);
+  const [selectedRole, setSelectedRole] = useState<"BUYER" | "SELLER">(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,9 +54,16 @@ export function UnifiedRegisterForm({
       phone: "",
       password: "",
       confirmPassword: "",
-      role: effectiveRole === "SELLER" ? UserRole.SELLER : UserRole.BUYER,
+      role: initialRole === "SELLER" ? UserRole.SELLER : UserRole.BUYER,
     },
   });
+
+  useEffect(() => {
+    if (initialRole) {
+      setSelectedRole(initialRole);
+      form.setValue("role", initialRole === "SELLER" ? UserRole.SELLER : UserRole.BUYER);
+    }
+  }, [initialRole, form]);
 
   const handleRoleChange = (role: "BUYER" | "SELLER") => {
     setSelectedRole(role);

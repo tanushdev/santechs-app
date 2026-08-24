@@ -24,7 +24,7 @@ export async function GET(
       .populate("seller", "name avatar")
       .populate({
         path: "company",
-        select: "name slug logo phone email address isVerified isApproved establishedYear employeeCount",
+        select: "name slug logo phone email address isVerified isApproved establishedYear",
       })
       .lean();
 

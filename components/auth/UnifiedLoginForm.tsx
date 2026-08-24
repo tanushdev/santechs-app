@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, getSession } from "next-auth/react";
@@ -28,11 +28,15 @@ export function UnifiedLoginForm({
 }: UnifiedLoginFormProps) {
   const searchParams = useSearchParams();
   const rawCallbackUrl = searchParams.get("callbackUrl");
-  const queryRole = searchParams.get("role")?.toUpperCase();
-  const effectiveRole = queryRole === "SELLER" || queryRole === "BUYER" ? queryRole : initialRole;
-  const [selectedRole, setSelectedRole] = useState<"BUYER" | "SELLER">(effectiveRole);
+  const [selectedRole, setSelectedRole] = useState<"BUYER" | "SELLER">(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialRole) {
+      setSelectedRole(initialRole);
+    }
+  }, [initialRole]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

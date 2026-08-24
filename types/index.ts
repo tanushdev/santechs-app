@@ -97,8 +97,6 @@ export interface ICompany {
   gstNumber?: string;
   panNumber?: string;
   establishedYear?: number;
-  employeeCount?: string;
-  turnover?: string;
   isVerified: boolean;
   isApproved: boolean;
   rejectionReason?: string;

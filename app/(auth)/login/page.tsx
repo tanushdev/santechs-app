@@ -7,10 +7,17 @@ export const metadata: Metadata = {
   description: "Sign in to your Santechs account to browse machinery or manage your storefront.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string; callbackUrl?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const initialRole = resolvedParams?.role?.toUpperCase() === "SELLER" ? "SELLER" : "BUYER";
+
   return (
     <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <UnifiedLoginForm initialRole="BUYER" />
+      <UnifiedLoginForm initialRole={initialRole} />
     </Suspense>
   );
 }

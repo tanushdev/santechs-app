@@ -26,7 +26,13 @@ function generateRef(): string {
 export async function submitEnquiry(productId: string, data: unknown) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== UserRole.BUYER) {
+    if (!session) {
+      return { success: false, error: "Please sign in to submit a quotation request" };
+    }
+    if (session.user.role === UserRole.SELLER) {
+      return { success: false, error: "Seller accounts cannot submit buyer quotation requests. Please sign in with a verified buyer account." };
+    }
+    if (session.user.role !== UserRole.BUYER) {
       return { success: false, error: "Please sign in as a buyer to submit an enquiry" };
     }
 

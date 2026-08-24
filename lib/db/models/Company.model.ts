@@ -28,8 +28,6 @@ export interface ICompanyDocument extends Document {
   gstNumber?: string;
   panNumber?: string;
   establishedYear?: number;
-  employeeCount?: string;
-  turnover?: string;
   isVerified: boolean;
   isApproved: boolean;
   rejectionReason?: string;
@@ -80,20 +78,6 @@ const CompanySchema = new Schema<ICompanyDocument>(
     gstNumber: { type: String },
     panNumber: { type: String },
     establishedYear: { type: Number },
-    employeeCount: {
-      type: String,
-      enum: ["1-10", "11-50", "51-200", "201-500", "500+"],
-    },
-    turnover: {
-      type: String,
-      enum: [
-        "Under 1Cr",
-        "1-5Cr",
-        "5-25Cr",
-        "25-100Cr",
-        "100Cr+",
-      ],
-    },
     isVerified: { type: Boolean, default: false },
     isApproved: { type: Boolean, default: false },
     rejectionReason: { type: String },

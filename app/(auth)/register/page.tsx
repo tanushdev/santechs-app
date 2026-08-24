@@ -7,10 +7,17 @@ export const metadata: Metadata = {
   description: "Join Santechs to source or list industrial textile machinery globally.",
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const initialRole = resolvedParams?.role?.toUpperCase() === "SELLER" ? "SELLER" : "BUYER";
+
   return (
     <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <UnifiedRegisterForm initialRole="BUYER" />
+      <UnifiedRegisterForm initialRole={initialRole} />
     </Suspense>
   );
 }

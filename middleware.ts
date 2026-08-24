@@ -96,6 +96,20 @@ export default async function middleware(req: NextRequest) {
       buyerToken?.role === UserRole.BUYER;
 
     if (!isBuyer) {
+      // If user is a Seller, prevent access to buyer area and redirect to seller dashboard
+      if (mainRole === UserRole.SELLER || sellerToken?.role === UserRole.SELLER) {
+        return NextResponse.redirect(new URL("/seller/dashboard", req.url));
+      }
+      // If user is an Admin, redirect to admin portal
+      if (
+        mainRole === UserRole.ADMIN ||
+        mainRole === UserRole.SUPER_ADMIN ||
+        adminToken?.role === UserRole.ADMIN ||
+        adminToken?.role === UserRole.SUPER_ADMIN
+      ) {
+        return NextResponse.redirect(new URL("/admin/sellers", req.url));
+      }
+
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);

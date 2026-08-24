@@ -45,8 +45,6 @@ export default function CompanyProfilePage() {
             gstNumber: res.company.gstNumber || "",
             panNumber: res.company.panNumber || "",
             establishedYear: res.company.establishedYear,
-            employeeCount: res.company.employeeCount,
-            turnover: res.company.turnover,
             address: {
               street: res.company.address?.street || "",
               city: res.company.address?.city || "",
@@ -186,26 +184,6 @@ export default function CompanyProfilePage() {
               <Label htmlFor="establishedYear" className="text-xs font-bold text-slate-700">Established Year</Label>
               <Input id="establishedYear" type="number" {...register("establishedYear", { valueAsNumber: true })} placeholder="2005" className="h-9 text-sm" />
               {errors.establishedYear && <p className="text-xs text-red-600">{errors.establishedYear.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="employeeCount" className="text-xs font-bold text-slate-700">Employee Count</Label>
-              <select id="employeeCount" {...register("employeeCount")} className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Select size</option>
-                {["1-10", "11-50", "51-200", "201-500", "500+"].map((count) => (
-                  <option key={count} value={count}>{count}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="turnover" className="text-xs font-bold text-slate-700">Annual Turnover</Label>
-              <select id="turnover" {...register("turnover")} className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Select range</option>
-                {["Under 1Cr", "1-5Cr", "5-25Cr", "25-100Cr", "100Cr+"].map((range) => (
-                  <option key={range} value={range}>{range}</option>
-                ))}
-              </select>
             </div>
 
             <div className="space-y-2">
