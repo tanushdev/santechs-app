@@ -4,7 +4,7 @@ import Category from "@/lib/db/models/Category.model";
 import { auth } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { PlusCircle, Search, Eye, Archive, MessageSquare, Package, Download } from "lucide-react";
+import { PlusCircle, Search, Eye, Archive, MessageSquare, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductStatus, UserRole } from "@/types";
@@ -74,12 +74,6 @@ export default async function SellerProductsPage({
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <a href="/api/admin/products/export" download>
-              <Button variant="outline" className="rounded-full border-[#e5e7eb] hover:bg-slate-50 font-semibold px-5 py-2.5 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
-                <Download className="w-3.5 h-3.5" />
-                Export CSV
-              </Button>
-            </a>
             <Link href="/seller/products/new">
               <Button className="rounded-full bg-black text-white hover:bg-neutral-800 font-semibold px-6 py-2.5 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
                 <PlusCircle className="w-4 h-4" />
@@ -172,8 +166,13 @@ export default async function SellerProductsPage({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4 text-xs pt-1 text-slate-500 font-semibold">
-                    <span className="text-black">
-                      {product.price ? `${product.currency === "INR" ? "₹" : product.currency} ${product.price.toLocaleString("en-IN")}` : "Price on Request"}
+                    <span className="text-black font-bold">
+                      {product.price
+                        ? `${product.currency === "INR" ? "₹" : product.currency} ${product.price.toLocaleString("en-IN")}${product.unit ? ` / ${product.unit}` : ""}`
+                        : "Price on Request"}
+                    </span>
+                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">
+                      Inventory: {product.quantity ? `${product.quantity.toLocaleString("en-IN")} ${product.unit ? `${product.unit}${product.unit === "Kg" || product.unit === "Ton" ? "s" : ""}` : "Units"}` : "1 Unit"}
                     </span>
                     <span className="flex items-center gap-1 font-mono text-[11px] text-slate-400">
                       <Eye className="w-3.5 h-3.5" /> {product.views} views

@@ -189,8 +189,10 @@ export default function ProductCard({
         {/* Price */}
         <div className="flex items-center justify-between mb-3">
           <div>
-            <span className="text-sm font-semibold text-slate-500">
-              Price on Request
+            <span className="text-sm font-bold text-slate-900">
+              {product.price
+                ? `${product.currency === "INR" ? "₹" : String(product.currency || "USD")} ${Number(product.price).toLocaleString("en-IN")}${product.unit ? ` / ${String(product.unit)}` : ""}`
+                : "Price on Request"}
             </span>
           </div>
 

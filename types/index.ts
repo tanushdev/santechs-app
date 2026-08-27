@@ -175,6 +175,7 @@ export interface IProduct {
   price?: number;
   priceNegotiable: boolean;
   currency: string;
+  unit?: string;
   // Quantity
   quantity: number;
   // Location

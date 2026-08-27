@@ -18,7 +18,6 @@ import {
   RotateCcw,
   PanelLeftClose,
   PanelLeftOpen,
-  Download,
   PackageX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -131,7 +130,12 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSingleFilter("search", localSearch || null);
+    if (localSearch.trim()) {
+      // Search across ALL categories, types, and inventory
+      router.push(`${pathname}?search=${encodeURIComponent(localSearch.trim())}`);
+    } else {
+      router.push(pathname);
+    }
   };
 
   const toggleCategoryExpand = (catId: string) => {
@@ -374,7 +378,7 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
                     id="products-search"
                     value={localSearch}
                     onChange={(e) => setLocalSearch(e.target.value)}
-                    placeholder="Search machinery by name, DTY, FDY, POY, brand..."
+                    placeholder="Search across all machinery, raw materials, PET chips, spare parts, models..."
                     className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 text-xs focus:bg-white"
                   />
                 </div>
@@ -401,18 +405,6 @@ export default function ProductsClientPage({ searchParams }: ProductsClientPageP
                   ))}
                 </select>
               </div>
-
-              {/* Export Catalog CSV */}
-              <a href="/api/admin/products/export" download>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2.5 text-xs font-semibold rounded-xl border-slate-200 hover:bg-slate-100/70 text-slate-700 flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                </Button>
-              </a>
 
               {/* View Mode Toggle */}
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">

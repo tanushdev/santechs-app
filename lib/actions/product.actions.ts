@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth/config";
 import { connectToDatabase } from "@/lib/db/connection";
 import Product from "@/lib/db/models/Product.model";
+import Category from "@/lib/db/models/Category.model";
 import Notification from "@/lib/db/models/Notification.model";
 import ActivityLog from "@/lib/db/models/ActivityLog.model";
 import { productSchema } from "@/lib/validations";
@@ -92,12 +93,21 @@ export async function createProduct(data: unknown) {
       if (derived) productData.location.continent = derived;
     }
 
+    let productType = productData.type;
+    if (!productType && productData.category) {
+      const selectedCat = await Category.findById(productData.category).select("type").lean();
+      if (selectedCat?.type) {
+        productType = selectedCat.type;
+      }
+    }
+
     const initialStatus = isAdmin
       ? (rawData.status as ProductStatus) || ProductStatus.APPROVED
       : ProductStatus.PENDING;
 
     const product = await Product.create({
       ...productData,
+      type: productType || "MACHINE",
       referenceNumber: ref,
       slug: toSlug(parsed.data.name, ref),
       seller: targetSellerId,
@@ -187,6 +197,13 @@ export async function updateProduct(productId: string, data: unknown) {
     if (updateData.location?.country && !updateData.location.continent) {
       const derived = getContinentFromCountry(updateData.location.country);
       if (derived) updateData.location.continent = derived;
+    }
+
+    if (!updateData.type && updateData.category) {
+      const selectedCat = await Category.findById(updateData.category).select("type").lean();
+      if (selectedCat?.type) {
+        updateData.type = selectedCat.type;
+      }
     }
 
     // Admin can update seller/company assignment if sellerId is provided

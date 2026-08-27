@@ -23,6 +23,7 @@ export interface IProductDocument extends Document {
   category: mongoose.Types.ObjectId;
   subCategory?: mongoose.Types.ObjectId;
   brand?: mongoose.Types.ObjectId;
+  type?: string;
   status: ProductStatus;
   condition: ProductCondition;
   machineType?: string;
@@ -35,6 +36,7 @@ export interface IProductDocument extends Document {
   price?: number;
   priceNegotiable: boolean;
   currency: string;
+  unit?: string;
   quantity: number;
   location: IAddress;
   images: string[];
@@ -85,6 +87,7 @@ const ProductSchema = new Schema<IProductDocument>(
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     subCategory: { type: Schema.Types.ObjectId, ref: "Category" },
     brand: { type: Schema.Types.ObjectId, ref: "Brand" },
+    type: { type: String },
     status: {
       type: String,
       enum: Object.values(ProductStatus),
@@ -105,6 +108,7 @@ const ProductSchema = new Schema<IProductDocument>(
     price: { type: Number, min: 0 },
     priceNegotiable: { type: Boolean, default: false },
     currency: { type: String, default: "USD" },
+    unit: { type: String, default: "Unit" },
     quantity: { type: Number, default: 1, min: 1 },
     location: { type: AddressSchema, required: true },
     images: [{ type: String }],

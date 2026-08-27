@@ -74,6 +74,7 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
           price: initialData.price,
           priceNegotiable: initialData.priceNegotiable ?? false,
           currency: initialData.currency ?? "INR",
+          unit: initialData.unit ?? "Unit",
           quantity: initialData.quantity ?? 1,
           location: {
             street: initialData.location?.street || "",
@@ -113,6 +114,7 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
           numberOfSpindles: undefined,
           price: undefined,
           currency: "USD",
+          unit: "Unit",
           quantity: 1,
           images: [],
           videos: [],
@@ -138,6 +140,10 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
   });
 
   const selectedCategory = watch("category");
+  const selectedUnit = watch("unit") || "Unit";
+  const selectedCategoryObj = categories.find((c) => String(c._id) === String(selectedCategory));
+  const isRawMaterial = selectedCategoryObj?.type === "RAW_MATERIAL";
+
   const subCategories = categories.filter((c) => {
     const parentId = typeof c.parent === "object" ? c.parent?._id : c.parent;
     return parentId && String(parentId) === String(selectedCategory);
@@ -445,14 +451,17 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price (Leave empty if contact for price)</Label>
+              <Label htmlFor="price">
+                Price {selectedUnit ? `(per ${selectedUnit})` : "(per Unit)"}
+              </Label>
               <Input
                 id="price"
                 type="number"
+                step="any"
                 {...register("price", { valueAsNumber: true })}
-                placeholder="e.g. 85000"
+                placeholder={isRawMaterial || selectedUnit === "Kg" ? "e.g. 110" : "e.g. 85000"}
               />
               {errors.price && (
                 <p className="text-xs text-destructive mt-1 font-medium">{errors.price.message}</p>
@@ -473,16 +482,36 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity Available</Label>
+              <Label htmlFor="unit">Price &amp; Inventory Unit</Label>
+              <select
+                id="unit"
+                {...register("unit")}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm font-semibold text-slate-800 ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="Kg">Kg (Kilograms)</option>
+                <option value="Ton">Ton (Metric Tons)</option>
+                <option value="Unit">Unit (Machine / Asset)</option>
+                <option value="Set">Set (Complete Line)</option>
+                <option value="Piece">Piece (Spare Part)</option>
+                <option value="Meter">Meter (Fabric / Yarn)</option>
+                <option value="Lot">Lot (Bulk Package)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quantity">
+                Available Inventory ({selectedUnit ? `${selectedUnit}s` : "Units"})
+              </Label>
               <Input
                 id="quantity"
                 type="number"
+                step="any"
                 {...register("quantity", { valueAsNumber: true })}
-                placeholder="1"
+                placeholder={isRawMaterial || selectedUnit === "Kg" ? "e.g. 50000" : "1"}
               />
             </div>
 
-            <div className="flex items-center space-x-2 sm:col-span-3 pt-2">
+            <div className="flex items-center space-x-2 sm:col-span-2 lg:col-span-4 pt-2">
               <input
                 id="priceNegotiable"
                 type="checkbox"

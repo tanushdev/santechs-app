@@ -63,6 +63,7 @@ export default function AdminProductModal({
   const [condition, setCondition] = useState<string>(ProductCondition.USED);
   const [price, setPrice] = useState<string>("");
   const [currency, setCurrency] = useState<string>("USD");
+  const [unit, setUnit] = useState<string>("Unit");
   const [quantity, setQuantity] = useState<string>("1");
   const [status, setStatus] = useState<string>(ProductStatus.APPROVED);
   const [city, setCity] = useState<string>("");
@@ -124,6 +125,7 @@ export default function AdminProductModal({
       setCondition(productToEdit.condition || ProductCondition.USED);
       setPrice(productToEdit.price !== undefined ? String(productToEdit.price) : "");
       setCurrency(productToEdit.currency || "USD");
+      setUnit(productToEdit.unit || "Unit");
       setQuantity(productToEdit.quantity ? String(productToEdit.quantity) : "1");
       setStatus(productToEdit.status || ProductStatus.APPROVED);
       setCity(productToEdit.location?.city || "");
@@ -139,11 +141,11 @@ export default function AdminProductModal({
       setCategory(categories?.[0]?._id || "");
       setSubCategory("");
       setBrand("");
-      setBrand("");
       setModel("");
       setCondition(ProductCondition.USED);
       setPrice("");
       setCurrency("USD");
+      setUnit("Unit");
       setQuantity("1");
       setStatus(ProductStatus.APPROVED);
       setCity("");
@@ -202,6 +204,7 @@ export default function AdminProductModal({
         condition,
         price: price ? parseFloat(price) : 0,
         currency,
+        unit: unit || "Unit",
         quantity: parseInt(quantity) || 1,
         location: {
           city: city || "Global",
@@ -426,12 +429,15 @@ export default function AdminProductModal({
             </div>
           </div>
 
-          {/* Price, Currency & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Price, Currency, Unit & Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
-              <Label className="font-semibold text-slate-800">Price</Label>
+              <Label className="font-semibold text-slate-800">
+                Price {unit ? `(per ${unit})` : ""}
+              </Label>
               <Input
                 type="number"
+                step="any"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0"
@@ -453,6 +459,23 @@ export default function AdminProductModal({
             </div>
 
             <div className="space-y-1.5">
+              <Label className="font-semibold text-slate-800">Unit</Label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-full h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800"
+              >
+                <option value="Kg">Kg (Kilograms)</option>
+                <option value="Ton">Ton (Metric Tons)</option>
+                <option value="Unit">Unit (Machine / Asset)</option>
+                <option value="Set">Set (Complete Line)</option>
+                <option value="Piece">Piece (Spare Part)</option>
+                <option value="Meter">Meter (Fabric / Yarn)</option>
+                <option value="Lot">Lot (Bulk Package)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label className="font-semibold text-slate-800">Status</Label>
               <select
                 value={status}
@@ -467,7 +490,7 @@ export default function AdminProductModal({
             </div>
           </div>
 
-          {/* Condition, Model, Brand */}
+          {/* Condition, Model, Inventory / Quantity */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="font-semibold text-slate-800">Condition</Label>
@@ -494,12 +517,16 @@ export default function AdminProductModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="font-semibold text-slate-800">Quantity</Label>
+              <Label className="font-semibold text-slate-800">
+                Inventory ({unit ? `${unit}s` : "Quantity"})
+              </Label>
               <Input
                 type="number"
+                step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="text-xs font-mono"
+                placeholder={unit === "Kg" ? "50000" : "1"}
               />
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { companySchema, CompanyFormValues } from "@/lib/validations";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Info, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Building2, Info, Loader2, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, PlusCircle } from "lucide-react";
 
 export default function CompanyProfilePage() {
   const router = useRouter();
@@ -70,9 +71,12 @@ export default function CompanyProfilePage() {
     try {
       const res = await updateCompanyProfile(data);
       if (res.success) {
-        setSuccess("Company profile updated successfully!");
+        setSuccess("Company profile updated successfully! Redirecting to Overview...");
         setCompany(res.company);
         router.refresh();
+        setTimeout(() => {
+          router.push("/seller/dashboard");
+        }, 1200);
       } else {
         setError(res.error || "An error occurred");
       }
@@ -113,6 +117,27 @@ export default function CompanyProfilePage() {
                 Provide your verified business credentials to list industrial machinery.
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/seller/dashboard")}
+              className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs h-9 px-4 flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Overview</span>
+            </Button>
+            <Link href="/seller/products/new">
+              <Button
+                type="button"
+                className="rounded-xl bg-[#ff7759] hover:bg-[#ff7759]/90 text-white font-bold text-xs h-9 px-4 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Add Products</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -252,20 +277,46 @@ export default function CompanyProfilePage() {
         </div>
 
         {/* Form CTA Actions */}
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" className="rounded-xl px-6 h-10 font-bold text-xs cursor-pointer" onClick={() => router.push("/seller/dashboard")}>
-            Cancel
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-xl px-5 h-10 font-bold text-xs cursor-pointer border-slate-200 flex items-center gap-2 w-full sm:w-auto"
+            onClick={() => router.push("/seller/dashboard")}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Overview
           </Button>
-          <Button type="submit" disabled={saving} className="rounded-xl bg-black text-white hover:bg-slate-800 font-bold px-6 h-10 text-xs transition-colors cursor-pointer">
-            {saving ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-[#ff7759]" />
-                Saving Profile...
-              </>
-            ) : (
-              "Save Company Profile"
-            )}
-          </Button>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <Link href="/seller/products/new" className="w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-[#ff7759]/40 text-[#ff7759] hover:bg-[#ff7759]/10 font-bold px-4 h-10 text-xs cursor-pointer w-full sm:w-auto flex items-center gap-1.5"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Add Products
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="rounded-xl bg-black text-white hover:bg-slate-800 font-bold px-6 h-10 text-xs transition-colors cursor-pointer w-full sm:w-auto flex items-center gap-1.5"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-[#ff7759]" />
+                  Saving Profile...
+                </>
+              ) : (
+                <>
+                  <span>Save &amp; Go to Overview</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

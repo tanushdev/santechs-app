@@ -10,16 +10,11 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
 
     const isAdmin = session?.user?.role && [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role);
-    const isSeller = session?.user?.role === UserRole.SELLER;
-
-    let filter: Record<string, any> = {};
-    if (isSeller) {
-      filter = { seller: session?.user?.id };
-    } else if (!isAdmin) {
-      filter = { status: ProductStatus.APPROVED };
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized. Admin access required." }, { status: 403 });
     }
 
-    const products = await Product.find(filter)
+    const products = await Product.find({})
       .populate("category", "name slug")
       .populate("subCategory", "name slug")
       .populate("seller", "name email phone")
@@ -33,7 +28,9 @@ export async function GET(req: NextRequest) {
       "Model Number",
       "Category",
       "Sub-Category",
-      ...(isAdmin ? ["Seller Name", "Seller Email", "Company Name"] : ["Company Name"]),
+      "Seller Name",
+      "Seller Email",
+      "Company Name",
       "Price",
       "Currency",
       "Year",

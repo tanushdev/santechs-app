@@ -77,23 +77,6 @@ export function SellerSidebarNavContent({
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
-          const isLockedItem = !isApproved && item.href !== "/seller/company";
-
-          if (isLockedItem) {
-            return (
-              <div
-                key={item.href}
-                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground/20 cursor-not-allowed select-none bg-transparent"
-                title="Pending administrator approval"
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="w-4 h-4 flex-shrink-0 text-sidebar-foreground/10" />
-                  <span>{item.label}</span>
-                </div>
-                <Lock className="w-3.5 h-3.5 text-sidebar-foreground/20" />
-              </div>
-            );
-          }
 
           return (
             <Link

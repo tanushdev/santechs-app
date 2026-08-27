@@ -101,6 +101,7 @@ export const productSchema = z.object({
   price: z.number().min(0).optional(),
   priceNegotiable: z.boolean().default(false),
   currency: z.string().default("USD"),
+  unit: z.string().default("Unit").optional(),
   quantity: z.number().min(1).default(1),
   location: z.object({
     street: z.string().optional(),

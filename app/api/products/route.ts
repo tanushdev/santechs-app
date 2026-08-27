@@ -4,6 +4,7 @@ import Product from "@/lib/db/models/Product.model";
 import Category from "@/lib/db/models/Category.model";
 import Brand from "@/lib/db/models/Brand.model";
 import Company from "@/lib/db/models/Company.model";
+import User from "@/lib/db/models/User.model";
 import { ProductStatus } from "@/types";
 import { getCountriesForContinent } from "@/lib/utils/continent";
 
@@ -36,12 +37,42 @@ export async function GET(req: NextRequest) {
     if (typeParam && typeParam !== "ALL") {
       const typeList = typeParam.split(",").map((t) => t.trim().toUpperCase()).filter(Boolean);
       if (typeList.length > 0) {
-        andConditions.push({ type: { $in: typeList } });
+        const matchingCats = await Category.find({ type: { $in: typeList as any[] } }).select("_id").lean();
+        const matchingCatIds = matchingCats.map((c) => String(c._id));
+
+        andConditions.push({
+          $or: [
+            { type: { $in: typeList } },
+            { category: { $in: matchingCatIds } },
+            { subCategory: { $in: matchingCatIds } },
+          ],
+        });
       }
     }
 
-    // Text search via Atlas Search (or regex fallback)
+    // Comprehensive search across all products, models, categories, tags, sellers, and companies
     if (search) {
+      const matchingCats = await Category.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { slug: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id").lean();
+      const catIds = matchingCats.map((c) => c._id);
+
+      const matchingUsers = await User.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id").lean();
+      const userIds = matchingUsers.map((u) => u._id);
+
+      const matchingCompanies = await Company.find({
+        name: { $regex: search, $options: "i" },
+      }).select("_id").lean();
+      const companyIds = matchingCompanies.map((c) => c._id);
+
       andConditions.push({
         $or: [
           { name: { $regex: search, $options: "i" } },
@@ -49,6 +80,12 @@ export async function GET(req: NextRequest) {
           { tags: { $regex: search, $options: "i" } },
           { manufacturer: { $regex: search, $options: "i" } },
           { model: { $regex: search, $options: "i" } },
+          { machineModel: { $regex: search, $options: "i" } },
+          { machineType: { $regex: search, $options: "i" } },
+          { referenceNumber: { $regex: search, $options: "i" } },
+          ...(catIds.length > 0 ? [{ category: { $in: catIds } }, { subCategory: { $in: catIds } }] : []),
+          ...(userIds.length > 0 ? [{ seller: { $in: userIds } }] : []),
+          ...(companyIds.length > 0 ? [{ company: { $in: companyIds } }] : []),
         ],
       });
     }

@@ -335,9 +335,14 @@ export default function AdminAllProductsPage() {
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                    <span className="font-bold text-slate-900">
-                      {String(product.currency ?? "USD")} {Number(product.price ?? 0).toLocaleString()}
-                    </span>
+                    <div>
+                      <span className="font-bold text-slate-900">
+                        {String(product.currency ?? "USD")} {Number(product.price ?? 0).toLocaleString()}{product.unit ? ` / ${String(product.unit)}` : ""}
+                      </span>
+                      <span className="text-[11px] text-slate-500 ml-2 font-mono">
+                        ({Number(product.quantity ?? 1).toLocaleString()} {product.unit ? `${String(product.unit)}${String(product.unit) === "Kg" || String(product.unit) === "Ton" ? "s" : ""}` : "Units"})
+                      </span>
+                    </div>
                     <span className="text-slate-400 flex items-center gap-1 text-[11px]">
                       <Eye className="w-3.5 h-3.5" />
                       {Number(product.views ?? 0)} views

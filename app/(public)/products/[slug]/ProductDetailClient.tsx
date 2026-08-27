@@ -289,9 +289,18 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               {/* Pricing Display */}
               <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 space-y-2">
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Asking Price</span>
-                <div className="text-2xl font-bold text-slate-950">Price on Request</div>
-                <div className="text-xs text-slate-500 pt-2 border-t border-slate-200/60 mt-3">
-                  Quantity: <span className="font-semibold text-slate-800">{product.quantity ?? 1} unit(s)</span>
+                <div className="text-2xl font-bold text-slate-950">
+                  {product.price
+                    ? `${product.currency === "INR" ? "₹" : product.currency} ${Number(product.price).toLocaleString("en-IN")}${product.unit ? ` / ${product.unit}` : ""}`
+                    : "Price on Request"}
+                </div>
+                <div className="text-xs text-slate-500 pt-2 border-t border-slate-200/60 mt-3 flex items-center justify-between">
+                  <span>Available Inventory:</span>
+                  <span className="font-semibold text-slate-900 font-mono">
+                    {product.quantity
+                      ? `${Number(product.quantity).toLocaleString("en-IN")} ${product.unit ? `${product.unit}${product.unit === "Kg" || product.unit === "Ton" ? "s" : ""}` : "unit(s)"}`
+                      : `1 ${product.unit || "unit"}`}
+                  </span>
                 </div>
               </div>
 
