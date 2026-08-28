@@ -58,7 +58,7 @@ export default function CategoriesAdminPage() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["admin-categories-tree"],
     queryFn: async () => {
-      const res = await fetch("/api/categories?tree=true");
+      const res = await fetch("/api/categories?tree=true&noCache=true", { cache: "no-store" });
       const json = await res.json();
       return json.data ?? [];
     },
@@ -66,76 +66,131 @@ export default function CategoriesAdminPage() {
 
   const handleCreateRootCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCatName.trim()) return;
-    setIsSubmitting(true);
+    const catName = newCatName.trim();
+    if (!catName) return;
 
-    const generatedSlug = newCatName
-      .trim()
+    // Instant UI close and modal reset
+    setCreateModalOpen(false);
+    setNewCatName("");
+
+    const generatedSlug = catName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+
+    const tempCat = {
+      _id: `temp-${Date.now()}`,
+      name: catName,
+      slug: generatedSlug,
+      type: newCatType,
+      subcategories: [],
+      isOptimistic: true,
+    };
+
+    const previousTree = queryClient.getQueryData<any[]>(["admin-categories-tree"]);
+    queryClient.setQueryData<any[]>(["admin-categories-tree"], (old = []) => [
+      ...old,
+      tempCat,
+    ]);
 
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newCatName.trim(),
+          name: catName,
           slug: generatedSlug,
           type: newCatType,
         }),
       });
 
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["admin-categories-tree"] });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        queryClient.setQueryData<any[]>(["admin-categories-tree"], (old = []) =>
+          old.map((c) => (c._id === tempCat._id ? { ...json.data, subcategories: [] } : c))
+        );
         queryClient.invalidateQueries({ queryKey: ["categories-tree"] });
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        setCreateModalOpen(false);
-        setNewCatName("");
       } else {
-        const errorData = await res.json();
-        alert(errorData.error || "Failed to create category");
+        queryClient.setQueryData(["admin-categories-tree"], previousTree);
+        alert(json.error || "Failed to create category");
       }
     } catch {
+      queryClient.setQueryData(["admin-categories-tree"], previousTree);
       alert("Network error. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleQuickAddSubCategory = async (parentCat: any) => {
-    const subName = (inlineSubInputs[parentCat._id] || "").trim();
-    if (!subName) return;
+    const rawInput = (inlineSubInputs[parentCat._id] || "").trim();
+    if (!rawInput) return;
 
+    // Support comma-separated multiple subcategories!
+    const names = rawInput.split(",").map((s) => s.trim()).filter(Boolean);
+    if (names.length === 0) return;
+
+    // 1. Instantly clear input so user can type next one without 1ms delay
+    setInlineSubInputs((prev) => ({ ...prev, [parentCat._id]: "" }));
     setAddingSubForCatId(parentCat._id);
 
-    const generatedSlug = subName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
+    // 2. Optimistic local UI update (0ms response time)
+    const tempSubs = names.map((name) => ({
+      _id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+      type: parentCat.type || "MACHINE",
+      parent: parentCat._id,
+      isOptimistic: true,
+    }));
+
+    const previousTree = queryClient.getQueryData<any[]>(["admin-categories-tree"]);
+
+    queryClient.setQueryData<any[]>(["admin-categories-tree"], (old = []) =>
+      old.map((cat) => {
+        if (String(cat._id) === String(parentCat._id)) {
+          return {
+            ...cat,
+            subcategories: [...(cat.subcategories || []), ...tempSubs],
+          };
+        }
+        return cat;
+      })
+    );
 
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: subName,
-          slug: generatedSlug,
+          names,
           type: parentCat.type || "MACHINE",
           parent: parentCat._id,
         }),
       });
 
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["admin-categories-tree"] });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const createdItems = Array.isArray(json.items) ? json.items : [json.data];
+        queryClient.setQueryData<any[]>(["admin-categories-tree"], (old = []) =>
+          old.map((cat) => {
+            if (String(cat._id) === String(parentCat._id)) {
+              const cleanSubs = (cat.subcategories || []).filter((s: any) => !s.isOptimistic);
+              return {
+                ...cat,
+                subcategories: [...cleanSubs, ...createdItems],
+              };
+            }
+            return cat;
+          })
+        );
         queryClient.invalidateQueries({ queryKey: ["categories-tree"] });
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        setInlineSubInputs((prev) => ({ ...prev, [parentCat._id]: "" }));
       } else {
-        const errorData = await res.json();
-        alert(errorData.error || "Failed to add sub-category");
+        queryClient.setQueryData(["admin-categories-tree"], previousTree);
+        alert(json.error || "Failed to add sub-category");
       }
     } catch {
+      queryClient.setQueryData(["admin-categories-tree"], previousTree);
       alert("Network error. Please try again.");
     } finally {
       setAddingSubForCatId(null);
@@ -146,17 +201,34 @@ export default function CategoriesAdminPage() {
     if (!confirm(`Are you sure you want to delete "${catName}"?`)) return;
     setDeletingId(id);
 
+    const previousTree = queryClient.getQueryData<any[]>(["admin-categories-tree"]);
+
+    // Optimistically remove from UI in 0ms
+    queryClient.setQueryData<any[]>(["admin-categories-tree"], (old = []) =>
+      old
+        .filter((cat) => String(cat._id) !== String(id))
+        .map((cat) => ({
+          ...cat,
+          subcategories: (cat.subcategories || []).filter(
+            (sub: any) => String(sub._id) !== String(id)
+          ),
+        }))
+    );
+
     try {
       const res = await fetch(`/api/categories?id=${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["admin-categories-tree"] });
         queryClient.invalidateQueries({ queryKey: ["categories-tree"] });
         queryClient.invalidateQueries({ queryKey: ["categories"] });
       } else {
+        queryClient.setQueryData(["admin-categories-tree"], previousTree);
         alert("Failed to delete category");
       }
+    } catch {
+      queryClient.setQueryData(["admin-categories-tree"], previousTree);
+      alert("Network error. Please try again.");
     } finally {
       setDeletingId(null);
     }
@@ -403,7 +475,7 @@ export default function CategoriesAdminPage() {
                         [cat._id]: e.target.value,
                       }))
                     }
-                    placeholder={`+ Add sub-category under ${cat.name}...`}
+                    placeholder={`+ Add sub-category (or comma-separated like: A, B, C)...`}
                     className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-[#ff7759]"
                   />
                   <Button
