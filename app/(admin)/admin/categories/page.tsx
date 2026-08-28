@@ -69,14 +69,26 @@ export default function CategoriesAdminPage() {
     const catName = newCatName.trim();
     if (!catName) return;
 
-    // Instant UI close and modal reset
-    setCreateModalOpen(false);
-    setNewCatName("");
-
     const generatedSlug = catName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+
+    // Check if root category already exists in current list
+    const existing = (categories ?? []).some(
+      (c: any) =>
+        c.name.trim().toLowerCase() === catName.toLowerCase() ||
+        c.slug.toLowerCase() === generatedSlug.toLowerCase()
+    );
+
+    if (existing) {
+      alert(`"${catName}" already exists and cannot be added again.`);
+      return;
+    }
+
+    // Instant UI close and modal reset
+    setCreateModalOpen(false);
+    setNewCatName("");
 
     const tempCat = {
       _id: `temp-${Date.now()}`,
@@ -113,7 +125,7 @@ export default function CategoriesAdminPage() {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
       } else {
         queryClient.setQueryData(["admin-categories-tree"], previousTree);
-        alert(json.error || "Failed to create category");
+        alert(json.error || `"${catName}" already exists and cannot be added again.`);
       }
     } catch {
       queryClient.setQueryData(["admin-categories-tree"], previousTree);
@@ -128,6 +140,18 @@ export default function CategoriesAdminPage() {
     // Support comma-separated multiple subcategories!
     const names = rawInput.split(",").map((s) => s.trim()).filter(Boolean);
     if (names.length === 0) return;
+
+    // Check if any subcategory already exists under this parent
+    const existingSubs = parentCat.subcategories || [];
+    for (const name of names) {
+      const isDuplicate = existingSubs.some(
+        (s: any) => s.name.trim().toLowerCase() === name.toLowerCase()
+      );
+      if (isDuplicate) {
+        alert(`"${name}" already exists under "${parentCat.name}" and cannot be added again.`);
+        return;
+      }
+    }
 
     // 1. Instantly clear input so user can type next one without 1ms delay
     setInlineSubInputs((prev) => ({ ...prev, [parentCat._id]: "" }));
@@ -187,7 +211,7 @@ export default function CategoriesAdminPage() {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
       } else {
         queryClient.setQueryData(["admin-categories-tree"], previousTree);
-        alert(json.error || "Failed to add sub-category");
+        alert(json.error || `This sub-category already exists and cannot be added.`);
       }
     } catch {
       queryClient.setQueryData(["admin-categories-tree"], previousTree);
