@@ -4,12 +4,19 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 // Configure Cloudinary with environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+if (process.env.CLOUDINARY_URL) {
+  cloudinary.config({
+    cloudinary_url: process.env.CLOUDINARY_URL,
+    secure: true,
+  });
+} else {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
 
 function uploadToCloudinary(buffer: Buffer, folder: string = "santechs/products"): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
@@ -52,11 +59,12 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // 1. If Cloudinary credentials are configured (Production / Cloud)
-    if (
-      process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
-    ) {
+    const isCloudinaryConfigured = Boolean(
+      process.env.CLOUDINARY_URL ||
+      (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+    );
+
+    if (isCloudinaryConfigured) {
       const uploadResult = await uploadToCloudinary(buffer);
 
       return NextResponse.json({
