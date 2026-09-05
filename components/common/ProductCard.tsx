@@ -114,7 +114,7 @@ export default function ProductCard({
       )}
 
       {/* Image */}
-      <Link href={`/products/${product.slug as string}`} className="block">
+      <Link href={`/products/${product.slug as string}`} prefetch={true} className="block">
         <div className="relative aspect-[4/3] bg-muted overflow-hidden">
           {images.length > 0 ? (
             <Image
@@ -162,7 +162,7 @@ export default function ProductCard({
         </div>
 
         {/* Name */}
-        <Link href={`/products/${product.slug as string}`}>
+        <Link href={`/products/${product.slug as string}`} prefetch={true}>
           <h3 className="font-semibold font-heading text-sm leading-snug mb-1 line-clamp-2 hover:text-primary transition-colors">
             {product.name as string}
           </h3>

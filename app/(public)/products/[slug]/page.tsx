@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { connectToDatabase } from "@/lib/db/connection";
 import Product from "@/lib/db/models/Product.model";
 import { ProductStatus } from "@/types";
@@ -5,41 +6,50 @@ import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
 import type { Metadata } from "next";
 
+export const revalidate = 60;
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
+// React cache deduplicates DB queries between generateMetadata and ProductDetailPage
+const getCachedProduct = cache(async (slug: string) => {
   await connectToDatabase();
-  const product = await Product.findOne({ slug, status: ProductStatus.APPROVED }).select("name description").lean();
-
-  if (!product) return { title: "Product Not Found" };
-
-  return {
-    title: `${product.name} — Textile Machinery & Materials`,
-    description: product.description.substring(0, 160),
-  };
-}
-
-export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-
-  await connectToDatabase();
-
-  const product = await Product.findOne({
+  return Product.findOne({
     slug,
     status: ProductStatus.APPROVED,
   })
     .populate("category", "name slug")
     .populate("company", "name logo establishedYear isVerified")
     .lean();
+});
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getCachedProduct(slug);
+
+  if (!product) return { title: "Product Not Found" };
+
+  return {
+    title: `${product.name} — Textile Machinery & Materials`,
+    description: (product.description || "").substring(0, 160),
+    openGraph: {
+      title: product.name,
+      description: (product.description || "").substring(0, 160),
+      images: product.images?.[0] ? [{ url: product.images[0] }] : [],
+    },
+  };
+}
+
+export default async function ProductDetailPage({ params }: ProductPageProps) {
+  const { slug } = await params;
+  const product = await getCachedProduct(slug);
 
   if (!product) {
     notFound();
   }
 
-  // Increment views in database (fire & forget style)
+  // Increment views in database (fire & forget style, non-blocking)
   Product.findByIdAndUpdate(product._id, { $inc: { views: 1 } }).exec().catch((err) => {
     console.error("Failed to increment product views:", err);
   });

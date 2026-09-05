@@ -12,6 +12,7 @@ import User from "@/lib/db/models/User.model";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { getContinentFromCountry } from "@/lib/utils/continent";
 import { invalidateCategoryCache } from "@/lib/cache/category-cache";
+import { revalidatePath } from "next/cache";
 
 function generateRef(): string {
   return `SAN-${Date.now().toString(36).toUpperCase()}-${Math.random()
@@ -397,13 +398,13 @@ export async function deleteProduct(productId: string) {
 
     await connectToDatabase();
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).select("seller").lean();
     if (!product) return { success: false, error: "Product not found" };
 
     const isSellerOwner =
       session.user.role === UserRole.SELLER &&
-      product.seller.toString() === session.user.id;
-    const isSuperAdmin = session.user.role === UserRole.SUPER_ADMIN;
+      String(product.seller) === session.user.id;
+    const isSuperAdmin = session.user.role === UserRole.SUPER_ADMIN || session.user.role === UserRole.ADMIN;
 
     if (!isSellerOwner && !isSuperAdmin) {
       return { success: false, error: "Unauthorized" };
@@ -411,14 +412,20 @@ export async function deleteProduct(productId: string) {
 
     await Product.findByIdAndDelete(productId);
 
-    await ActivityLog.create({
+    // Non-blocking background activity log
+    ActivityLog.create({
       actor: session.user.id,
       action: "PRODUCT_DELETED",
       resource: "Product",
       resourceId: productId,
-    });
+    }).catch(console.error);
 
     invalidateCategoryCache();
+
+    // Revalidate paths for instant UI refresh
+    revalidatePath("/seller/products");
+    revalidatePath("/admin/all-products");
+    revalidatePath("/products");
 
     return { success: true, message: "Product deleted successfully!" };
   } catch (error) {

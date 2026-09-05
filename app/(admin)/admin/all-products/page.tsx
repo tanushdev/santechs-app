@@ -59,12 +59,38 @@ export default function AdminAllProductsPage() {
       return;
     }
     setDeletingId(productId);
+
+    // Optimistic UI update: remove immediately from cache for instant feedback (0ms wait)
+    const currentQueryKey = ["admin", "all-products", selectedStatus];
+    const previousData = queryClient.getQueryData(currentQueryKey);
+    queryClient.setQueryData(currentQueryKey, (old: any) => {
+      if (!old) return old;
+      if (Array.isArray(old)) {
+        return old.filter((p: any) => p._id !== productId);
+      }
+      if (Array.isArray(old.items)) {
+        return {
+          ...old,
+          items: old.items.filter((p: any) => p._id !== productId),
+          total: Math.max(0, (old.total || 1) - 1),
+        };
+      }
+      return old;
+    });
+
     try {
       const res = await deleteProduct(productId);
-      if (res.success) {
-        queryClient.invalidateQueries({ queryKey: ["admin", "all-products"] });
-      } else {
+      if (!res.success) {
+        if (previousData) {
+          queryClient.setQueryData(currentQueryKey, previousData);
+        }
         alert(res.error || "Failed to delete product");
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["admin", "all-products"] });
+      }
+    } catch (err) {
+      if (previousData) {
+        queryClient.setQueryData(currentQueryKey, previousData);
       }
     } finally {
       setDeletingId(null);
