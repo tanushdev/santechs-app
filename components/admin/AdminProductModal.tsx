@@ -621,7 +621,7 @@ export default function AdminProductModal({
                 {isUploadingImage ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Uploading to Vercel...</span>
+                    <span>Uploading...</span>
                   </>
                 ) : (
                   <>

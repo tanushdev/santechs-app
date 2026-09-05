@@ -1,7 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+
+// Configure Cloudinary with environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+function uploadToCloudinary(buffer: Buffer, folder: string = "santechs/products"): Promise<UploadApiResponse> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error || !result) {
+          return reject(error || new Error("Cloudinary upload failed"));
+        }
+        resolve(result);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,28 +48,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "File size exceeds 10MB limit" }, { status: 400 });
     }
 
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `products/${timestamp}-${safeName}`;
-
-    // 1. If Vercel Blob token is configured (Production on Vercel)
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(filename, file, {
-        access: "public",
-        addRandomSuffix: true,
-      });
-
-      return NextResponse.json({
-        success: true,
-        url: blob.url,
-        provider: "vercel-blob",
-      });
-    }
-
-    // 2. Local Fallback for offline development without Vercel Blob token
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // 1. If Cloudinary credentials are configured (Production / Cloud)
+    if (
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+    ) {
+      const uploadResult = await uploadToCloudinary(buffer);
+
+      return NextResponse.json({
+        success: true,
+        url: uploadResult.secure_url,
+        provider: "cloudinary",
+      });
+    }
+
+    // 2. Local Fallback for offline development without Cloudinary credentials
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const uploadsDir = path.join(process.cwd(), "public", "uploads", "products");
     await mkdir(uploadsDir, { recursive: true });
 

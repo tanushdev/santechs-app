@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "2.wlimg.com" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
       { protocol: "https", hostname: "blob.vercel-storage.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
     ],
   },
 
