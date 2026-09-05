@@ -207,8 +207,8 @@ export default function AdminProductModal({
     e.preventDefault();
     setError(null);
 
-    if (name.length < 5) {
-      setError("Product name must be at least 5 characters long.");
+    if (!name.trim()) {
+      setError("Product name is required.");
       return;
     }
 
