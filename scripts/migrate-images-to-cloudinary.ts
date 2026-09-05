@@ -41,6 +41,10 @@ async function migrateImages() {
   let urlMigrated = 0;
   let alreadyCloudinary = 0;
 
+  const activeCloudName =
+    process.env.CLOUDINARY_CLOUD_NAME ||
+    (process.env.CLOUDINARY_URL ? process.env.CLOUDINARY_URL.split("@")[1] : "");
+
   for (const product of products) {
     const images: string[] = product.images || [];
     let updated = false;
@@ -49,8 +53,8 @@ async function migrateImages() {
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
 
-      // If already on Cloudinary, keep it as is
-      if (img.includes("res.cloudinary.com")) {
+      // If already on the active new Cloudinary account, keep it
+      if (activeCloudName && img.includes(`res.cloudinary.com/${activeCloudName}/`)) {
         newImages.push(img);
         alreadyCloudinary++;
         continue;
