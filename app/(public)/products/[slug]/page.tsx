@@ -49,11 +49,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  // Increment views in database (fire & forget style, non-blocking)
-  Product.findByIdAndUpdate(product._id, { $inc: { views: 1 } }).exec().catch((err) => {
-    console.error("Failed to increment product views:", err);
-  });
-
   // Serialize Document fields for Client Components
   const serializedProduct = JSON.parse(JSON.stringify(product));
 

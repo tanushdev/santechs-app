@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -32,6 +32,24 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [selectedImage, setSelectedImage] = useState(product.images?.[0] ?? "");
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [views, setViews] = useState<number>(product.views ?? 0);
+
+  useEffect(() => {
+    const sessionKey = `viewed_${product._id}`;
+    const alreadyViewed = typeof window !== "undefined" ? sessionStorage.getItem(sessionKey) : null;
+
+    if (!alreadyViewed && product.slug) {
+      fetch(`/api/products/${product.slug}/view`, { method: "POST" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && typeof data.views === "number") {
+            setViews(data.views);
+            sessionStorage.setItem(sessionKey, "true");
+          }
+        })
+        .catch(() => {});
+    }
+  }, [product._id, product.slug]);
 
   const conditionColors: Record<string, { label: string; badgeClass: string }> = {
     EXCELLENT: { label: "Excellent Condition", badgeClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
@@ -142,12 +160,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     Built {product.yearOfManufacture}
                   </span>
                 )}
-                {product.views > 0 && (
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Eye className="w-4 h-4 text-slate-400" />
-                    {product.views.toLocaleString()} Views
-                  </span>
-                )}
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Eye className="w-4 h-4 text-slate-400" />
+                  {views.toLocaleString()} {views === 1 ? "View" : "Views"}
+                </span>
                 {product.location && (
                   <span className="flex items-center gap-1.5 font-medium">
                     <MapPin className="w-4 h-4 text-orange-500" />

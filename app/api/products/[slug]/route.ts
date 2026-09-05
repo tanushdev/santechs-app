@@ -35,9 +35,6 @@ export async function GET(
       );
     }
 
-    // Increment view counter (fire and forget)
-    Product.findByIdAndUpdate(product._id, { $inc: { views: 1 } }).exec();
-
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
     console.error("Product detail error:", error);
