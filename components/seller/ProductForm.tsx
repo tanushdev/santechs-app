@@ -150,22 +150,44 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
   });
   const rootCategories = categories.filter((c) => !c.parent);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImages((prev) => {
-          const updated = [...prev, base64String];
-          setValue("images", updated, { shouldValidate: true });
-          return updated;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+    setError(null);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
         });
-      };
-      reader.readAsDataURL(file);
-    });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || `Failed to upload ${file.name}`);
+        }
+        return data.url as string;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setImages((prev) => {
+        const updated = [...prev, ...uploadedUrls];
+        setValue("images", updated, { shouldValidate: true });
+        return updated;
+      });
+    } catch (err: any) {
+      setError(err?.message || "Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
@@ -419,12 +441,22 @@ export default function ProductForm({ categories, brands = [], initialData }: Pr
                 </div>
               ))}
 
-              <label className="border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 cursor-pointer rounded-xl flex flex-col items-center justify-center aspect-square transition-all duration-200">
-                <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary mb-2" />
-                <span className="text-xs font-semibold text-muted-foreground">Upload Photo</span>
+              <label className={`border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 rounded-xl flex flex-col items-center justify-center aspect-square transition-all duration-200 ${isUploadingImage ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}>
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-6 h-6 text-primary animate-spin mb-2" />
+                    <span className="text-xs font-semibold text-primary">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary mb-2" />
+                    <span className="text-xs font-semibold text-muted-foreground">Upload Photo</span>
+                  </>
+                )}
                 <input
                   type="file"
                   multiple
+                  disabled={isUploadingImage}
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"

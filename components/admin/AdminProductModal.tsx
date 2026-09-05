@@ -156,6 +156,42 @@ export default function AdminProductModal({
     }
   }, [productToEdit, open, categories]);
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleAdminFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+    setError(null);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || `Failed to upload ${file.name}`);
+        }
+        return data.url as string;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setImages((prev) => [...prev, ...uploadedUrls]);
+    } catch (err: any) {
+      setError(err?.message || "Failed to upload image.");
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = "";
+    }
+  };
+
   const handleAddImage = () => {
     if (imageUrl.trim() && !images.includes(imageUrl.trim())) {
       setImages([...images, imageUrl.trim()]);
@@ -579,12 +615,35 @@ export default function AdminProductModal({
 
           {/* Images */}
           <div className="space-y-2 pt-1">
-            <Label className="font-semibold text-slate-800">Product Images (URLs) *</Label>
+            <div className="flex items-center justify-between">
+              <Label className="font-semibold text-slate-800">Product Images *</Label>
+              <label className={`inline-flex items-center gap-1 text-xs font-bold text-[#ff7759] hover:underline cursor-pointer ${isUploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Uploading to Vercel...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Photo</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  multiple
+                  disabled={isUploadingImage}
+                  accept="image/*"
+                  onChange={handleAdminFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
             <div className="flex gap-2">
               <Input
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Paste image URL (e.g. https://images.unsplash.com/...)"
+                placeholder="Or paste image URL (e.g. https://images.unsplash.com/...)"
                 className="text-xs"
               />
               <Button
@@ -593,7 +652,7 @@ export default function AdminProductModal({
                 onClick={handleAddImage}
                 className="shrink-0 bg-slate-900 hover:bg-black text-white font-bold text-xs"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Add
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add URL
               </Button>
             </div>
 
