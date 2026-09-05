@@ -19,7 +19,7 @@ export async function POST(
     const product = await Product.findOneAndUpdate(
       { slug, status: ProductStatus.APPROVED },
       { $inc: { views: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     )
       .select("views")
       .lean();
