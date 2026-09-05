@@ -20,6 +20,7 @@ import { useSession } from "next-auth/react";
 import { UserRole } from "@/types";
 import { deleteProduct } from "@/lib/actions/product.actions";
 import AdminProductModal from "@/components/admin/AdminProductModal";
+import DeleteProductConfirmModal, { DeleteProductTarget } from "@/components/common/DeleteProductConfirmModal";
 
 const statuses = ["ALL", "APPROVED", "PENDING", "REJECTED", "DRAFT", "ARCHIVED"];
 
@@ -27,6 +28,7 @@ export default function AdminAllProductsPage() {
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [productToDelete, setProductToDelete] = useState<DeleteProductTarget | null>(null);
   
   // Admin Product Modal state
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -54,10 +56,7 @@ export default function AdminAllProductsPage() {
     },
   });
 
-  const handleDelete = async (productId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) {
-      return;
-    }
+  const handleConfirmDelete = async (productId: string) => {
     setDeletingId(productId);
 
     // Optimistic UI update: remove immediately from cache for instant feedback (0ms wait)
@@ -395,7 +394,14 @@ export default function AdminAllProductsPage() {
                         variant="ghost"
                         className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 text-xs h-8 rounded-xl px-2.5"
                         disabled={deletingId === productId}
-                        onClick={() => handleDelete(productId)}
+                        onClick={() =>
+                          setProductToDelete({
+                            id: productId,
+                            name: String(product.name || "Product"),
+                            referenceNumber: product.referenceNumber ? String(product.referenceNumber) : undefined,
+                            image: Array.isArray(product.images) && product.images[0] ? String(product.images[0]) : undefined,
+                          })
+                        }
                       >
                         {deletingId === productId ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -417,6 +423,15 @@ export default function AdminAllProductsPage() {
         open={productModalOpen}
         onOpenChange={setProductModalOpen}
         productToEdit={productToEdit}
+      />
+
+      {/* High-Security Typed Confirmation Delete Modal */}
+      <DeleteProductConfirmModal
+        open={Boolean(productToDelete)}
+        onOpenChange={(open) => !open && setProductToDelete(null)}
+        product={productToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={Boolean(deletingId)}
       />
     </div>
   );

@@ -188,6 +188,9 @@ export default async function SellerProductsPage({
               <ProductRowActions
                 productId={product._id.toString()}
                 status={product.status}
+                productName={product.name}
+                productRef={product.referenceNumber}
+                productImage={product.images?.[0]}
               />
 
             </div>

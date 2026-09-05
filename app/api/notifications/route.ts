@@ -22,15 +22,34 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const [notifications, total, unreadCount] = await Promise.all([
-      Notification.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Notification.countDocuments(filter),
-      Notification.countDocuments({ recipient: session.user.id, isRead: false }),
-    ]);
+    const itemsPromise = Notification.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    let notifications: any[];
+    let total: number;
+    let unreadCount: number;
+
+    if (unreadOnly) {
+      const [items, count] = await Promise.all([
+        itemsPromise,
+        Notification.countDocuments({ recipient: session.user.id, isRead: false }),
+      ]);
+      notifications = items;
+      total = count;
+      unreadCount = count;
+    } else {
+      const [items, totalDocs, unread] = await Promise.all([
+        itemsPromise,
+        Notification.countDocuments(filter),
+        Notification.countDocuments({ recipient: session.user.id, isRead: false }),
+      ]);
+      notifications = items;
+      total = totalDocs;
+      unreadCount = unread;
+    }
 
     return NextResponse.json({
       success: true,
